@@ -1,10 +1,15 @@
-#include "cnsd1.h"
 #include <QtWidgets/QApplication>
+#include "Server.h"
+#include "Cilent.h"
 
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	CNSD1 w;
-	w.show();
+
+	Server server;
+	Cilent cilent;
+
+	cilent.connectToHost(BasicSetting::host, BasicSetting::port);
+
 	return a.exec();
 }
