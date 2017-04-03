@@ -5,3 +5,8 @@ Server::Server()
 {
 	socket.bind(BasicSetting::port);
 }
+
+State Server::state(void) const
+{
+	return socket.state();
+}

@@ -9,6 +9,9 @@ class Server : public QObject
 
 public:
 	Server();
+
+public:
+	State state(void) const;
 	
 private:
 	QAbstractSocket socket;

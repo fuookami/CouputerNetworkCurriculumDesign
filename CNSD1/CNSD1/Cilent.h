@@ -11,12 +11,26 @@ public:
 	Cilent();
 
 public:
-	void connectToHost(const QString &host, quint16 port);
+	RetCode connectToHost(const QString &host, quint16 port, 
+		quint8 MaxRetryTime = BasicSetting::MaxRetryTime,
+		quint16 MSOfOnceTry = BasicSetting::MSOfOnceTry);
+	RetCode disconnectFromHost(quint16 MSOfOnceTry = BasicSetting::MSOfOnceTry);
+
+	inline State state(void) const;
+
+signals:
+	void pushedMsg(const QString &errMsg);
 
 private slots:
+	void hostFounded(void);
 	void connectSucceed(void);
-	void connectUnsucceed(void);
+	void disconnectSucceed(void);
+
+	void pushErrorMsg(void);
 
 private:
-	QAbstractSocket socket;
+	void pushMsg(const QString &msg);
+
+private:
+	QAbstractSocket *socket = nullptr;
 };
