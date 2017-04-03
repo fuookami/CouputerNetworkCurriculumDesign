@@ -8,15 +8,15 @@ using RetCode = unsigned char;
 
 namespace BasicSetting
 {
-	static const QString host("LocalHost");
-	static const unsigned short port(8080);
+	static const unsigned short port(10000);
 	static const unsigned char MaxRetryTime(10);
 	static const unsigned short MSOfOnceTry(1000);
 
 	enum RetCodes
 	{
-		NoError,
+		NoError = 1,
 		StateError,
 		ServerLose,
+		BoundFail,
 	};
 }

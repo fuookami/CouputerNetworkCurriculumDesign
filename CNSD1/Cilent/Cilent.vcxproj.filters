@@ -49,7 +49,7 @@
     <ClCompile Include="Cilent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="ClientMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

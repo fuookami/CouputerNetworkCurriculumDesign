@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Public.h"
-#include <QtNetwork/QAbstractSocket>
+#include <QtNetwork/QUdpSocket>
 
 class Cilent : public QObject
 {
@@ -11,7 +11,7 @@ public:
 	Cilent();
 
 public:
-	RetCode connectToHost(const QString &host, quint16 port, 
+	RetCode connectToHost(const QHostAddress &host, quint16 port, 
 		quint8 MaxRetryTime = BasicSetting::MaxRetryTime,
 		quint16 MSOfOnceTry = BasicSetting::MSOfOnceTry);
 	RetCode disconnectFromHost(quint16 MSOfOnceTry = BasicSetting::MSOfOnceTry);
@@ -32,5 +32,5 @@ private:
 	void pushMsg(const QString &msg);
 
 private:
-	QAbstractSocket *socket = nullptr;
+	QUdpSocket *udpSocket = nullptr;
 };

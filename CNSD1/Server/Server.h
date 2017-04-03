@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Public.h"
-#include <QtNetwork/QAbstractSocket>
+#include <QtNetwork/QUdpSocket>
 
 class Server : public QObject
 {
@@ -11,11 +11,23 @@ public:
 	Server();
 
 public:
-	State state(void) const;
+	RetCode listen(const QHostAddress &host = QHostAddress::LocalHost,
+		quint16 port = BasicSetting::port);
+	QHostAddress getHost(void) const;
+	quint16 getPort(void) const;
+	QString getHostAndPortStr(void) const;
+
+	void close(void);
 
 private:
-	RetCode bindToHost(const QString &host = BasicSetting::host, quint16 port = BasicSetting::port);
+	State state(void) const;
+
+private slots:
+	void processDatagrams(void);
 	
 private:
-	QAbstractSocket *socket;
+	QHostAddress currHost;
+	quint16 currPort;
+
+	QUdpSocket *server;
 };

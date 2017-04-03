@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 	QApplication a(argc, argv);
 
 	Cilent cilent;
-	cilent.connectToHost(BasicSetting::host, BasicSetting::port);
+	cilent.connectToHost(QHostAddress::LocalHost, BasicSetting::port);
 
 	return a.exec();
 }
