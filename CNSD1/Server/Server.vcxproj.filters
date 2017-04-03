@@ -24,12 +24,12 @@
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{4c38df4d-f086-4c4e-8fa0-33bd3ebee12e}</UniqueIdentifier>
+      <UniqueIdentifier>{3c281878-2859-4f83-b513-4d0c7149d427}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{f2f93bcc-ab88-4739-9ec1-d9eb6402d91c}</UniqueIdentifier>
+      <UniqueIdentifier>{7dd14aa9-efa9-4a04-8efa-aa40b695e162}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
@@ -38,20 +38,11 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_Cilent.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_Server.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_Cilent.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="Server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Cilent.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Server.cpp">
+      <Filter>Generated Files\Debug</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_Server.cpp">
       <Filter>Generated Files\Release</Filter>
@@ -63,9 +54,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Cilent.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="Server.h">
       <Filter>Header Files</Filter>
     </CustomBuild>

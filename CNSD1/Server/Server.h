@@ -12,7 +12,10 @@ public:
 
 public:
 	State state(void) const;
+
+private:
+	RetCode bindToHost(const QString &host = BasicSetting::host, quint16 port = BasicSetting::port);
 	
 private:
-	QAbstractSocket socket;
+	QAbstractSocket *socket;
 };
