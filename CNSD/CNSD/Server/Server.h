@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ServerThread.h"
+#include <memory>
 #include <QtNetwork/QTcpServer>
 
 class Server : public QObject
@@ -11,7 +13,9 @@ public:
 
 private slots:
 	void getConnection();
+	void cilentDisconnectedSlot(const unsigned int id);
 
 private:
 	QTcpServer *tcpServer;
+	std::map<unsigned int, std::shared_ptr<ServerThread>> tcpSocketThreads;
 };

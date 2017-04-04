@@ -1,7 +1,7 @@
 #include "Server.h"
 
 Server::Server()
-	: tcpServer(new QTcpServer(nullptr)), tcpSocket(nullptr)
+	: tcpServer(new QTcpServer(nullptr))
 {
 	tcpServer->listen(QHostAddress::LocalHost, 10000);
 
@@ -10,5 +10,17 @@ Server::Server()
 
 void Server::getConnection()
 {
-	tcpSocket = tcpServer->nextPendingConnection();
+	unsigned int thisID(ServerThread::counter);
+	tcpSocketThreads.insert(std::make_pair(thisID, 
+		std::shared_ptr<ServerThread>(new ServerThread(tcpServer->nextPendingConnection()))));
+	ServerThread *serverThread(tcpSocketThreads[thisID].get());
+	
+	connect(serverThread, SIGNAL(cilentDisconnected(unsigned short id)), 
+		this, SLOT(cilentDisconnectedSlot(unsigned short id)));
+}
+
+void Server::cilentDisconnectedSlot(const unsigned int id)
+{
+	tcpSocketThreads[id].reset();
+	tcpSocketThreads.erase(id);
 }
