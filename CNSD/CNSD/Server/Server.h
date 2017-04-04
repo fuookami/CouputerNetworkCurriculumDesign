@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtNetwork/QUdpSocket>
+#include <QtNetwork/QTcpServer>
 
 class Server : public QObject
 {
@@ -10,8 +10,8 @@ public:
 	Server();
 
 private slots:
-	void processDatagrams(void);
+	void getConnection();
 
-public:
-	QUdpSocket *server;
+private:
+	QTcpServer *tcpServer;
 };

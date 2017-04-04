@@ -24,32 +24,44 @@
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{2b6b136d-2c20-4a46-98b3-91d7f17745d1}</UniqueIdentifier>
+      <UniqueIdentifier>{c8aec906-9a2a-4786-b49f-09178e633c55}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{6c8ca740-4547-47d9-878d-f3ecc1415b1b}</UniqueIdentifier>
+      <UniqueIdentifier>{9bb9091c-223f-4cf9-9372-74985a38aa0c}</UniqueIdentifier>
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Cilent.cpp">
+    <ClCompile Include="ServerMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_Cilent.cpp">
+    <ClCompile Include="Server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Server.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_Cilent.cpp">
+    <ClCompile Include="GeneratedFiles\Release\moc_Server.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="CilentMain.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_ServerThread.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ServerThread.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Cilent.h">
+    <CustomBuild Include="Server.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ServerThread.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
