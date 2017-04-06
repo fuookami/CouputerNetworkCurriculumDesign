@@ -1,15 +1,41 @@
 #include "Public.h"
 
-Public::DataFrame::DataFrame(unsigned int _id, std::string::iterator bgIt, std::string::iterator edIt)
-	: id(_id), checkNum(0)
+Public::DataFrame::DataFrame(QDataStream & in)
+{
+	in >> id >> request >> checkNum >> frameSize;
+	QByteArray rawData;
+	in.readRawData(rawData.data(), frameSize);
+	std::move(rawData.begin(), rawData.end(), data.begin());
+}
+
+Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt)
+	: id(_id), request(_request), checkNum(0)
 {
 	std::move(bgIt, edIt, data.begin());
+	frameSize = data.size();
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
 		checkNum += data[i];
 }
 
+QByteArray Public::DataFrame::toQByteArray(void) const
+{
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << id << request << checkNum << frameSize;
+	out.writeBytes(data.c_str(), data.size());
+	return std::move(block);
+}
+
+bool Public::DataFrame::isCorrect(void) const
+{
+	unsigned char tempCheckNum(0);
+	for (unsigned short i(0), j(data.size()); i != j; ++i)
+		tempCheckNum += data[i];
+	return tempCheckNum == checkNum;
+}
+
 template <class T>
-Public::DataRoulette Public::makeDataRoulette(RequestType requestType, T data)
+Public::DataRoulette Public::makeDataRoulette(T data)
 {
 	static auto HasPutAllData([RouletteSize, FrameMaxSize]
 		(const unsigned int i, const unsigned j, const QByteArray &block)->bool
@@ -20,7 +46,7 @@ Public::DataRoulette Public::makeDataRoulette(RequestType requestType, T data)
 	DataRoulette dataRoulette;
 
 	std::ostringstream sout;
-	sout << requestType << data;
+	sout << data;
 	std::string &dataStr(sout.str());
 	encode(dataStr);
 	std::string::iterator currIt(dataStr.begin());
@@ -30,12 +56,12 @@ Public::DataRoulette Public::makeDataRoulette(RequestType requestType, T data)
 		{
 			if (HasPutAllData(i, j + 1, block))
 			{
-				dataRoulette[j].push(DataFrame(j, currIt, block.end()));
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, dataStr.end()));
 				break;
 			}
 			else
 			{
-				dataRoulette[j].push(DataFrame(j, currIt, currIt + FrameMaxSize));
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
 				currIt += FrameMaxSize;
 			}
 		}
@@ -45,18 +71,21 @@ Public::DataRoulette Public::makeDataRoulette(RequestType requestType, T data)
 }
 
 template<class T>
-std::pair<Public::RequestType, T> Public::readDataRoulette(const DataRoulette & dataRoulette)
+std::pair<Public::RequestType, T> Public::readDataRoulette(DataRoulette & dataRoulette)
 {
-	std::stringstream io;
+	std::string block;
 	RequestType requestType;
 	T data;
 
 	for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
+	{
 		for (unsigned int k(0), l(dataRoulette[i].size()); k != l; ++k)
-			io << dataRoulette[i][k].data;
-	std::string &str(io);
+			std::move(dataRoulette[i][k].data.begin(), dataRoulette[i][k].data.end(), block.end());
+		dataRoulette[i].clear();
+	}
 
-	io >> requestType >> data;
+	std::istringstream sin(block);
+	sin >> data;
 	return std::make_pair(requestType, std::move(data));
 }
 
@@ -93,4 +122,20 @@ void Public::decode(std::string & data)
 	unsigned char k(0);
 	for (unsigned char i(0), j(data.size()); i != j; ++i, ++k)
 		data[i] -= k;
+}
+
+std::string Public::ui2str(unsigned int num)
+{
+	std::string str;
+	for (unsigned int i(0), j(4); i != j; ++i, num >>= 8)
+		str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
+	return std::move(str);
+}
+
+unsigned int Public::str2ui(const std::string & str)
+{
+	unsigned int num(0);
+	for (unsigned int i(0), j(str.size()); i != j; ++i, num <<= 8)
+		num += str[i];
+	return num;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Public.h"
-#include <QtCore/QString>
+#include <QtCore/QDataStream>
 #include <QtCore/QThread>
 #include <QtNetwork/QTcpSocket>
 

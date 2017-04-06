@@ -7,6 +7,6 @@ int main(int argc, char *argv[])
 	QApplication a(argc, argv);
 	Cilent cilent;
 	cilent.connectToHost(QHostAddress::LocalHost, 19999);
-	cilent.disconnectFromHost();
+	//cilent.disconnectFromHost();
 	return a.exec();
 }

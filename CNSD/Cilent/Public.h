@@ -5,16 +5,19 @@
 #include <string>
 #include <utility>
 #include <array>
-#include <queue>
+#include <deque>
 #include <random>
+#include <QtCore/QDataStream>
+#include <QtCore/QByteArray>
 
 namespace Public
 {
-	static const unsigned short FrameMaxSize = 256;
+	static const unsigned char FrameMaxSize = 255;
 	static const unsigned char WindowSize = 5;
 	static const unsigned char RouletteSize = WindowSize * 2;
 	static const unsigned char MaxRetryTime(10);
 	static const unsigned short MSOfOnceTry(1000);
+	static const unsigned char MSOfTimePart(100);
 
 	using RetCode = unsigned char;
 	enum RetCodes
@@ -47,21 +50,30 @@ namespace Public
 
 	struct DataFrame
 	{
-		DataFrame(unsigned int id, std::string::iterator bgIt, std::string::iterator edIt);
+		DataFrame(QDataStream &in);
+		DataFrame(unsigned int id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt);
 		~DataFrame() {}
 
+		QByteArray toQByteArray(void) const;
+		bool isCorrect(void) const;
+
 		unsigned int id;
-		std::string data;
+		RequestType request;
 		unsigned char checkNum;
+		unsigned char frameSize;
+		std::string data;
 	};
 
-	using DataRoulette = std::array<std::queue<DataFrame>, 10>;
+	using DataRoulette = std::array<std::deque<DataFrame>, 10>;
 	template <class T>
-	DataRoulette makeDataRoulette(RequestType requestType, T data);
+	DataRoulette makeDataRoulette(T data);
 	template <class T>
-	std::pair<RequestType, T> readDataRoulette(const DataRoulette &dataRoulette);
-	using DataQueue = std::queue<DataRoulette>;
+	std::pair<RequestType, T> readDataRoulette(DataRoulette &dataRoulette);
+	using DataQueue = std::deque<DataRoulette>;
 
 	void encode(std::string &data);
 	void decode(std::string &data);
+
+	std::string ui2str(const unsigned int num);
+	unsigned int str2ui(const std::string &str);
 };

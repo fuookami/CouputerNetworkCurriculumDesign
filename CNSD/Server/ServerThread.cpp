@@ -41,7 +41,16 @@ void ServerThread::cilentDisconnectedSlot()
 
 void ServerThread::dataReceived()
 {
-	qDebug() << QString::fromLocal8Bit("收到客户端的信息了");
+	QDataStream in(tcpSocket);
+	in.setVersion(QDataStream::Qt_5_8);
+	QString s;
+	in >> s;
+	qDebug() << s;
+
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << QString::fromLocal8Bit("Ass♂You♂Can");
+	tcpSocket->write(block);
 	/*
 	if (!isSending)
 		presendDispose();
