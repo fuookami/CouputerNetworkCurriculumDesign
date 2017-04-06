@@ -28,10 +28,13 @@ void ServerThread::cilentDisconnectedSlot()
 
 void ServerThread::dataReceived()
 {
+	// 2017-4-5 测试数据交接
+	/*
 	if (!isSending)
 		presendDispose();
 	else
 		sendingDispose();
+	*/
 }
 
 void ServerThread::presendDispose()

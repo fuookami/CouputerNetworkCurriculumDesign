@@ -17,7 +17,9 @@ namespace Public
 	using RequestType = unsigned char;
 	enum RequestTypes
 	{
-		CilentName,
+		SYN,
+		ACK,
+		PKT,
 	};
 
 	static const unsigned char FrameStateNum = 4;

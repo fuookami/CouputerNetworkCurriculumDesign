@@ -1,7 +1,7 @@
 #include "Server.h"
 
 Server::Server()
-	: tcpServer(new QTcpServer(nullptr))
+	: tcpServer(new QTcpServer(this))
 {
 	tcpServer->listen(QHostAddress::LocalHost, 10000);
 
