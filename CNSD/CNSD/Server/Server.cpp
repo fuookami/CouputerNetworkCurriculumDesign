@@ -10,6 +10,7 @@ Server::Server()
 
 void Server::getConnection()
 {
+	qDebug() << "一个连接";
 	unsigned int thisID(ServerThread::counter);
 	tcpSocketThreads.insert(std::make_pair(thisID, 
 		std::shared_ptr<ServerThread>(new ServerThread(tcpServer->nextPendingConnection()))));

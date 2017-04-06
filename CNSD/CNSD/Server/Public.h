@@ -13,6 +13,15 @@ namespace Public
 	static const unsigned short FrameMaxSize = 256;
 	static const unsigned char WindowSize = 5;
 	static const unsigned char RouletteSize = WindowSize * 2;
+	static const unsigned char MaxRetryTime(10);
+	static const unsigned short MSOfOnceTry(1000);
+
+	enum RetCodes
+	{
+		NoError,
+		StateError,
+		ServerLose,
+	};
 
 	using RequestType = unsigned char;
 	enum RequestTypes
