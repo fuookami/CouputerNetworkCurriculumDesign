@@ -47,6 +47,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_Cilent.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="Public.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Cilent.h">
@@ -54,7 +57,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\CNSD\Server\Public.h">
+    <ClInclude Include="Public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,10 +1,23 @@
 #include "ServerThread.h"
 
+unsigned short ServerThread::ThreadCounter = 0;
+
 ServerThread::ServerThread(QTcpSocket * _tcpSocket)
-	: tcpSocket(_tcpSocket), stopped(false), id(counter)
+	: tcpSocket(_tcpSocket), stopped(false), id(ThreadCounter)
 {
-	++counter;
+	++ThreadCounter;
 	isSending = false;
+	stopped = true;
+}
+
+unsigned short ServerThread::getThreadCounter(void)
+{
+	return ThreadCounter;
+}
+
+void ServerThread::start(void)
+{
+	stopped = false;
 	run();
 }
 
@@ -15,7 +28,7 @@ void ServerThread::run()
 
 	while (!stopped)
 	{
-		tcpSocket->waitForReadyRead(100);
+		tcpSocket->waitForReadyRead(500);
 	}
 	stopped = false;
 }
@@ -28,7 +41,7 @@ void ServerThread::cilentDisconnectedSlot()
 
 void ServerThread::dataReceived()
 {
-	// 2017-4-5 测试数据交接
+	qDebug() << QString::fromLocal8Bit("收到客户端的信息了");
 	/*
 	if (!isSending)
 		presendDispose();
@@ -43,7 +56,7 @@ void ServerThread::presendDispose()
 
 	switch (currFrameState)
 	{
-	case Public::FrameState::NoError:
+	case Public::FrameState::FrameNoError:
 
 	case Public::FrameState::Wrong:
 
@@ -60,7 +73,7 @@ void ServerThread::sendingDispose()
 
 	switch (currFrameState)
 	{
-	case Public::FrameState::NoError:
+	case Public::FrameState::FrameNoError:
 	case Public::FrameState::Lose:
 	case Public::FrameState::Wrong:
 	case Public::FrameState::NoReply:

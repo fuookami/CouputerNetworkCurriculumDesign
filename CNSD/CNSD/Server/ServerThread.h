@@ -7,20 +7,19 @@
 
 class ServerThread : public QThread
 {
-	Q_OBJECT;
-
-public:
-	static unsigned short counter;
+	Q_OBJECT
 
 public:
 	ServerThread(QTcpSocket *_tcpSocket);
+	static unsigned short getThreadCounter(void);
+	void start(void);
+
+signals:
+	void cilentDisconnected(const unsigned short);
+	void pushMsg(const std::string);
 
 protected:
 	void run();
-
-signals:
-	void cilentDisconnected(unsigned short id);
-	void push(const std::string msg);
 
 private slots:
 	void cilentDisconnectedSlot();
@@ -31,14 +30,15 @@ private:
 	void sendingDispose();
 
 private:
+	static unsigned short ThreadCounter;
 	unsigned short id;
-	QString cilentName;
+
 	QTcpSocket *tcpSocket;
+
 	bool isSending;
 	unsigned int currFrameNum;
 	unsigned int currOrder;
 	Public::DataRoulette dataRoulette;
+
 	volatile bool stopped;
 };
-
-unsigned short ServerThread::counter = 0;

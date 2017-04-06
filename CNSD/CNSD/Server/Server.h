@@ -6,14 +6,14 @@
 
 class Server : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	Server();
 
 private slots:
 	void getConnection();
-	void cilentDisconnectedSlot(const unsigned int id);
+	void cilentDisconnectedSlot(const unsigned short id);
 
 private:
 	QTcpServer *tcpServer;

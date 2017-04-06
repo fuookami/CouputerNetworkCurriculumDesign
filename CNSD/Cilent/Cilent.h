@@ -5,20 +5,22 @@
 
 class Cilent : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	Cilent();
 
-	void connectToHost(const QHostAddress &host, quint16 port);
-	void disconnect();
+	Public::RetCode connectToHost(const QHostAddress &host, quint16 port);
+	Public::RetCode disconnectFromHost();
 
 signals:
-	void pushMsg(const QString msg);
+	void pushMsg(const QString);
 
 private slots :
 	void connectSucceed();
-	void stateChangedSlot();
+	void disconnectSucceed();
+
+	void stateChangedSlot(QAbstractSocket::SocketState socketState);
 
 private:
 	QTcpSocket *tcpSocket;
