@@ -6,16 +6,16 @@
 #include <QtCore/QThread>
 #include <QtNetwork/QTcpSocket>
 
-class AbstractDataReceivedThread : public QThread
+class AbstractDataReceiveThread : public QThread
 {
 	Q_OBJECT
 
 public:
-	AbstractDataReceivedThread(QTcpSocket *_tcpSocket);
+	AbstractDataReceiveThread(QTcpSocket *_tcpSocket);
 	void startListenDataReceived();
 
 signals:
-	void pushMsg(const std::string msg);
+	void pushMsgSignal(const QString msg);
 	void pushReply(Public::RequestType requestType, unsigned int arg = 0);
 	void pushRequest(Public::RequestType requestType, unsigned int arg = 0);
 	void pushData(const std::string data);
@@ -29,6 +29,7 @@ protected:
 private:
 	void presendDispose();
 	void sendingDispose();
+	void pushMsg(const QString msg);
 
 private:
 	bool isSendingDataPackbage;

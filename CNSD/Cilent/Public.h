@@ -69,7 +69,7 @@ namespace Public
 	DataRoulette makeDataRoulette(T data);
 	template <class T>
 	std::pair<RequestType, T> readDataRoulette(DataRoulette &dataRoulette);
-	using DataQueue = std::deque<DataRoulette>;
+	using DataDeque = std::deque<DataRoulette>;
 
 	void encode(std::string &data);
 	void decode(std::string &data);

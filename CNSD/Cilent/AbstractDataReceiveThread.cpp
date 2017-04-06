@@ -1,18 +1,18 @@
-#include "AbstractDataReceivedThread.h"
+#include "AbstractDataReceiveThread.h"
 
-AbstractDataReceivedThread::AbstractDataReceivedThread(QTcpSocket *_tcpSocket)
+AbstractDataReceiveThread::AbstractDataReceiveThread(QTcpSocket *_tcpSocket)
 	: tcpSocket(_tcpSocket), stopped(true), isSendingDataPackbage(false), currFrameNum(0), totalFrameNum(0), waitingFrameId(0)
 {
 
 }
 
-void AbstractDataReceivedThread::startListenDataReceived()
+void AbstractDataReceiveThread::startListenDataReceived()
 {
 	stopped = false;
 	run();
 }
 
-void AbstractDataReceivedThread::dataReceived()
+void AbstractDataReceiveThread::dataReceived()
 {
 	if (isSendingDataPackbage)
 		presendDispose();
@@ -20,7 +20,7 @@ void AbstractDataReceivedThread::dataReceived()
 		sendingDispose();
 }
 
-void AbstractDataReceivedThread::run()
+void AbstractDataReceiveThread::run()
 {
 	connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataReceived()));
 
@@ -30,8 +30,8 @@ void AbstractDataReceivedThread::run()
 	}
 	stopped = false;
 }
-
-void AbstractDataReceivedThread::presendDispose()
+// 先补齐这里的消息提醒
+void AbstractDataReceiveThread::presendDispose()
 {
 	Public::State currFrameState(Public::getRandomFrameState());
 	QDataStream in(tcpSocket);
@@ -65,7 +65,7 @@ void AbstractDataReceivedThread::presendDispose()
 	}
 }
 
-void AbstractDataReceivedThread::sendingDispose()
+void AbstractDataReceiveThread::sendingDispose()
 {
 	Public::State currFrameState(Public::getRandomFrameState());
 	QDataStream in(tcpSocket);
@@ -113,4 +113,10 @@ void AbstractDataReceivedThread::sendingDispose()
 			isSendingDataPackbage = false;
 		}
 	}
+}
+
+void AbstractDataReceiveThread::pushMsg(const QString msg)
+{
+	qDebug() << msg;
+	//emit pushMsgSignal(std::move(msg));
 }
