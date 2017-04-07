@@ -2,13 +2,15 @@
 
 #include "Public.h"
 #include <set>
+#include <iostream>
+#include <sstream>
 #include <QtCore/QDataStream>
 #include <QtCore/QThread>
 #include <QtNetwork/QTcpSocket>
 
 class AbstractDataReceiveThread : public QThread
 {
-	Q_OBJECT
+	Q_OBJECT;
 
 public:
 	AbstractDataReceiveThread(QTcpSocket *_tcpSocket);

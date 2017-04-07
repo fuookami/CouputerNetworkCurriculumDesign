@@ -6,7 +6,7 @@
 
 class Server : public QObject
 {
-	Q_OBJECT
+	Q_OBJECT;
 
 public:
 	Server();

@@ -50,15 +50,6 @@
     <ClCompile Include="Public.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_CilentSendDataThread.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_CilentSendDataThread.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="CilentSendDataThread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_AbstractDataReceiveThread.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
@@ -80,9 +71,6 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Cilent.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CilentSendDataThread.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="AbstractDataReceiveThread.h">

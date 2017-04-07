@@ -6,6 +6,7 @@
 #include <utility>
 #include <array>
 #include <deque>
+#include <map>
 #include <random>
 #include <QtCore/QDataStream>
 #include <QtCore/QByteArray>
@@ -47,6 +48,7 @@ namespace Public
 	static std::vector<unsigned int> randomNumberMap;
 	void generateRandomNumberMap(void);
 	State getRandomFrameState(void);
+	std::string getFrameStateString(State state);
 
 	struct DataFrame
 	{

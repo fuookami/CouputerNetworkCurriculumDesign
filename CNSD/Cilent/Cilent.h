@@ -1,10 +1,11 @@
 #pragma once
 
-#include "CilentSendDataThread.h"
+#include "AbstractDataReceiveThread.h"
+#include "AbstractDataSendThread.h"
 
 class Cilent : public QObject
 {
-	Q_OBJECT
+	Q_OBJECT;
 
 public:
 	Cilent();
@@ -31,20 +32,7 @@ private:
 	void pushMsg(const QString &msg);
 
 private:
-	CilentSendDataThread *sendDataThread;
+	AbstractDataSendThread *sendDataThread;
+	AbstractDataReceiveThread *receiveThread;
 	QTcpSocket *tcpSocket;
 };
-
-template<class T>
-inline Public::RetCode Cilent::wirteToHost(Public::RequestType requestType, const T & data)
-{
-	if (sendDataThread == nullptr || tcpSocket->state() != QAbstractSocket::ConnectedState)
-		return Public::RetCodes::StateError;
-
-	sendDataThread->addData(requestType, data);
-	std::ostringstream sout;
-	sout << "数据已进入队列，" << "正在队列中的数据数量为：" << (unsigned int)sendDataThread->getDataQueueSize() << std::endl;
-	pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
-
-	return Public::RetCodes::NoError;
-}

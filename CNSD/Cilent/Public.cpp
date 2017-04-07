@@ -110,6 +110,19 @@ Public::State Public::getRandomFrameState()
 	return currNum >= randomNumberMap.size() ? (FrameStateNum - 1) : randomNumberMap[currNum];
 }
 
+std::string Public::getFrameStateString(State state)
+{
+	static std::map<State, std::string> frameStateString =
+	{
+		std::make_pair(FrameState::FrameNoError, "Õý³£"),
+		std::make_pair(FrameState::Lose, "Ö¡¶ªÊ§"),
+		std::make_pair(FrameState::Wrong, "Ö¡´íÎó"),
+		std::make_pair(FrameState::NoReply, "²»»Ø¸´")
+	};
+
+	return frameStateString[state];
+}
+
 void Public::encode(std::string & data)
 {
 	unsigned char k(0);
