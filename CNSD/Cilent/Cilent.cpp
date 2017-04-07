@@ -46,10 +46,9 @@ void Cilent::connectSucceed()
 	pushMsg(QString::fromLocal8Bit("连接成功，可以准备收发数据"));
 	disconnect(tcpSocket, SIGNAL(connected()));
 
-	sendDataThread = new CilentSendDataThread(tcpSocket);
-
-	for (unsigned int i(0); i != 10000; ++i)
-		wirteToHost(0, 1);
+	sendDataThread = new AbstractDataSendThread(tcpSocket);
+	receiveThread = new AbstractDataReceiveThread(tcpSocket);
+	receiveThread->startListenDataReceived();
 }
 
 void Cilent::disconnectSucceed()

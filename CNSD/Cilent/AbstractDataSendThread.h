@@ -20,7 +20,7 @@ signals:
 	void timeoutSignal(unsigned char);
 
 private slots:
-	void timeOutSlot(void);
+	void timeoutSlot(void);
 
 private:
 	QTimer *timer;
@@ -34,6 +34,7 @@ class AbstractDataSendThread : public QThread
 public:
 	AbstractDataSendThread(QTcpSocket *_tcpSocket);
 	void pushReply(Public::RequestType requestType, unsigned int arg = 0);
+	void disposeRequest(Public::RequestType requestType, unsigned int arg = 0);
 	template <class T>
 	void addData(const T &data);
 
@@ -43,13 +44,35 @@ signals:
 protected:
 	void run();
 
+private slots:
+	void packbackTimeout(unsigned char id);
+
+private:
+	void activeThread(void);
+	void sendData(void);
+
 private:
 	bool isSendingDataPackbage;
 	unsigned int acceptFrameId;
 	std::set<unsigned int> sendedButNotAcceptFrameId;
-	std::deque<Public::DataFrame> replys;
-	std::array<PKTTimer, Public::RouletteSize> timers;
+
+	std::deque<Public::DataFrame> reply;
+
+	std::array<PKTTimer *, Public::RouletteSize> timers;
 	Public::DataDeque datas;
+
 	QTcpSocket *tcpSocket;
-	QTimer *delayedSendTimer;
+
+	volatile bool stopped;
 };
+
+template<class T>
+inline void AbstractDataSendThread::addData(const T & data)
+{
+	datas.push_back(Public::makeDataRoulette(data));
+
+	std::string data(Public::ui2str(Public::countFrames(datas.back())));
+	reply.push_back(Public::DataFrame(0, Public::RequestTypes::SYN, data.begin(), data.end())); // Ìí¼ÓSYNÐÅºÅ
+	
+	activeThread();
+}

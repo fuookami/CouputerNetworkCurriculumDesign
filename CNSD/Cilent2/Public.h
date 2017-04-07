@@ -40,6 +40,13 @@ namespace Public
 
 	static const unsigned char FrameStateNum = 4;
 	using State = unsigned char;
+	enum ThreadState
+	{
+		Idle,
+		WaitForSending,
+		Sending,
+		Receieving
+	};
 	enum FrameState
 	{
 		FrameNoError,

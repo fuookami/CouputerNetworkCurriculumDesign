@@ -15,6 +15,7 @@ void AbstractDataReceiveThread::startListenDataReceived()
 
 void AbstractDataReceiveThread::dataReceived()
 {
+	pushMsg(QString::fromLocal8Bit("收到来自客户端的数据包，准备进行解析\n"));
 	if (isSendingDataPackbage)
 		presendDispose();
 	else
