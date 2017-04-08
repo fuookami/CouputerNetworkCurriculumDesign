@@ -65,9 +65,9 @@ private slots:
 	void PKTTimeOut(unsigned char id);
 
 private:
-	bool checkDataDeque(void);
 	void sendFrames(void);
-	void sendFrame(Public::RequestType requestType, unsigned int data);
+	void sendFrame(Public::RequestType requestType, unsigned int arg);
+	void sendFrame(const Public::DataFrame &frame);
 
 	void dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);

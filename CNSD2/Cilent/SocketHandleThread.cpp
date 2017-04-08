@@ -1,4 +1,4 @@
-#include "SocketHandleThread.h"
+ï»¿#include "SocketHandleThread.h"
 
 unsigned int SocketHandleThread::threadCounter = 0;
 
@@ -49,40 +49,39 @@ void SocketHandleThread::run()
 		{
 			if (!sendingInfo.sendingData.empty())
 			{
-				// ×ªÖÁ×¼±¸·¢ËÍÌ¬²¢·¢ËÍSYNĞÅºÅ
+				// è½¬è‡³å‡†å¤‡å‘é€æ€å¹¶å‘é€SYNä¿¡å·
 				threadState = Public::ThreadState::WaitForSending;
 				sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 			}
 		}
 		else if (threadState == Public::ThreadState::Sending)
 		{
-			// ¼ì²éÊÇ·ñÓĞĞèÒª·¢ËÍµÄÊı¾İÖ¡
-			if (checkDataDeque())
-				// Èç¹ûÓĞ£¬Ôò·¢ËÍ
-				sendFrames();
-			// ·ñÔòµÈ´ıACK»Ø¸´
+			// æ£€æŸ¥æ˜¯å¦æœ‰éœ€è¦å‘é€çš„æ•°æ®å¸§
+			// å¦‚æœæœ‰ï¼Œåˆ™å‘é€
+			sendFrames();
+			// å¦åˆ™ç­‰å¾…ACKå›å¤
 		}
 		else if (threadState == Public::ThreadState::WaitForSending)
 		{
-			// µÈ´ıACK»Ø¸´
+			// ç­‰å¾…ACKå›å¤
 		}
 		else if (threadState == Public::ThreadState::Receieving)
 		{
-			// µÈ´ıPKTÊı¾İ°ü·¢ËÍ
+			// ç­‰å¾…PKTæ•°æ®åŒ…å‘é€
 		}
 	}
 }
 
 void SocketHandleThread::dataReceived()
 {
-	emit pushMsg(QString::fromLocal8Bit("ÊÕµ½Êı¾İÖ¡£¬×¼±¸½øĞĞ½âÎö\n"));
+	emit pushMsg(QString::fromLocal8Bit("æ”¶åˆ°æ•°æ®å¸§ï¼Œå‡†å¤‡è¿›è¡Œè§£æ\n"));
 
 	Public::State currFrameState(Public::getRandomFrameState());
 	QDataStream in(tcpSocket);
 	Public::DataFrame currFrame(in);
 
 	std::ostringstream sout;
-	sout << "µ±Ç°Ëæ»úµÃµ½µÄÖ¡×´Ì¬Îª" << Public::getFrameStateString(currFrameState) << std::endl;
+	sout << "å½“å‰éšæœºå¾—åˆ°çš„å¸§çŠ¶æ€ä¸º" << Public::getFrameStateString(currFrameState) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	if (currFrameState == Public::FrameState::Lose)
@@ -90,18 +89,18 @@ void SocketHandleThread::dataReceived()
 	if (currFrameState == Public::FrameState::Wrong
 		|| !currFrame.isCorrect())
 	{
-		emit pushMsg(QString::fromLocal8Bit("Ö¡Ğ£Ñé³ö´í£¬¶ªÆú¸ÃÖ¡\n"));
+		emit pushMsg(QString::fromLocal8Bit("å¸§æ ¡éªŒå‡ºé”™ï¼Œä¸¢å¼ƒè¯¥å¸§\n"));
 		return;
 	}
 
 	sout.clear();
-	sout << "Ö¡Ğ£ÑéÕıÈ·£¬Êı¾İÎª£º" << currFrame.data << std::endl;
+	sout << "å¸§æ ¡éªŒæ­£ç¡®ï¼Œæ•°æ®ä¸ºï¼š" << currFrame.data << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
-	emit pushMsg(QString::fromLocal8Bit("×¼±¸½øĞĞ½âÃÜ\n"));
+	emit pushMsg(QString::fromLocal8Bit("å‡†å¤‡è¿›è¡Œè§£å¯†\n"));
 	Public::decode(currFrame.data);
-	emit pushMsg(QString::fromLocal8Bit("½âÃÜÍê³É\n"));
+	emit pushMsg(QString::fromLocal8Bit("è§£å¯†å®Œæˆ\n"));
 	sout.clear();
-	sout << "½âÃÜºóÊı¾İÎª£º" << currFrame.data << std::endl;
+	sout << "è§£å¯†åæ•°æ®ä¸ºï¼š" << currFrame.data << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	switch (threadState)
@@ -123,11 +122,43 @@ void SocketHandleThread::dataReceived()
 	}
 }
 
+void SocketHandleThread::sendFrames(void)
+{
+	static auto calIdDistance([](const unsigned int lastSendedId, const unsigned int lastAcceptId)->unsigned int
+	{
+		if (lastSendedId < lastAcceptId)
+			return lastSendedId + Public::RouletteSize - lastAcceptId;
+		else
+			return lastSendedId - lastAcceptId;
+	});
+	for (;calIdDistance(sendingInfo.lastSendedId, sendingInfo.lastAcceptId) < Public::WindowSize;)
+	{
+		sendingInfo.lastSendedId = ++sendingInfo.lastSendedId % Public::RouletteSize;
+		if (!sendingInfo.sendingData.front()[sendingInfo.lastSendedId].empty())
+		{
+			// å‘é€çª—å£å†…æœ‰æœªå‘é€çš„æ•°æ®å¸§
+			// å‘é€æ•°æ®å¸§ï¼Œå¹¶å¯åŠ¨å¸§å¯¹åº”çš„è®¡æ—¶å™¨
+
+		}
+	}
+}
+
+void SocketHandleThread::sendFrame(Public::RequestType requestType, unsigned int arg)
+{
+	std::string data(Public::ui2str(arg));
+	sendFrame(Public::DataFrame(0, requestType, data.begin(), data.end()));
+}
+
+void SocketHandleThread::sendFrame(const Public::DataFrame & frame)
+{
+	tcpSocket->write(frame.toQByteArray());
+}
+
 void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState)
 {
 	if (currFrame.request == Public::RequestTypes::SYN)
 	{
-		// ³õÊ¼»¯Êı¾İ½ÓÊÕ²Û²¢×ªÈë½ÓÊÕ×´Ì¬
+		// åˆå§‹åŒ–æ•°æ®æ¥æ”¶æ§½å¹¶è½¬å…¥æ¥æ”¶çŠ¶æ€
 		recievingInfo.waitingFrameId = recievingInfo.currFrameNum = 0;
 		recievingInfo.buffFrameId.clear();
 		for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
@@ -135,35 +166,35 @@ void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame,
 		recievingInfo.totalFrameNum = Public::str2ui(currFrame.data);
 
 		std::ostringstream sout;
-		sout << "½ÓÊÕµ½Êı¾İ·¢ËÍÇëÇó£¬¹²" << recievingInfo.totalFrameNum << "¸ö°ü£¬×ªÈë½ÓÊÕÊı¾İ°ü×´Ì¬" << std::endl;
+		sout << "æ¥æ”¶åˆ°æ•°æ®å‘é€è¯·æ±‚ï¼Œå…±" << recievingInfo.totalFrameNum << "ä¸ªåŒ…ï¼Œè½¬å…¥æ¥æ”¶æ•°æ®åŒ…çŠ¶æ€" << std::endl;
 		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		threadState = Public::ThreadState::Receieving;
 		
-		// ·µ»ØACK(-1)
+		// è¿”å›ACK(-1)
 		if (frameState == Public::FrameState::NoReply)
 			return;
 
-		emit pushMsg(QString::fromLocal8Bit("Ïò¶Ô·½·¢ËÍACKĞÅºÅ£¬Ê¾Òâ¿É·¢ËÍÊı¾İ°ü\n"));
+		emit pushMsg(QString::fromLocal8Bit("å‘å¯¹æ–¹å‘é€ACKä¿¡å·ï¼Œç¤ºæ„å¯å‘é€æ•°æ®åŒ…\n"));
 		sendFrame(Public::RequestTypes::ACK, -1);
 	}
 	else if (currFrame.request == Public::RequestTypes::PKT)
 	{
-		// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡£¬²¢·µ»ØACK(-1)¸æÖª¶Ô·½£¬ËùÓĞÖ¡ÒÑ½ÓÊÕÍê±Ï
+		// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§ï¼Œå¹¶è¿”å›ACK(-1)å‘ŠçŸ¥å¯¹æ–¹ï¼Œæ‰€æœ‰å¸§å·²æ¥æ”¶å®Œæ¯•
 		std::ostringstream sout;
-		sout << "½ÓÊÕµ½Êı¾İ°ü£¬Ö¡±àºÅÎª" << currFrame.id << "£¬ÓÉÓÚÎŞµÈ´ı½ÓÊÕÊı¾İ°ü£¬½«Å×Æú¸ÃÖ¡" << std::endl;
+		sout << "æ¥æ”¶åˆ°æ•°æ®åŒ…ï¼Œå¸§ç¼–å·ä¸º" << currFrame.id << "ï¼Œç”±äºæ— ç­‰å¾…æ¥æ”¶æ•°æ®åŒ…ï¼Œå°†æŠ›å¼ƒè¯¥å¸§" << std::endl;
 		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 		if (frameState == Public::FrameState::NoReply)
 			return;
 
-		emit pushMsg(QString::fromLocal8Bit("Ïò¶Ô·½·¢ËÍACK(-1)ĞÅºÅ£¬Ê¾ÒâËùÓĞÊı¾İÒÑ½ÓÊÕÍê±Ï\n"));
+		emit pushMsg(QString::fromLocal8Bit("å‘å¯¹æ–¹å‘é€ACK(-1)ä¿¡å·ï¼Œç¤ºæ„æ‰€æœ‰æ•°æ®å·²æ¥æ”¶å®Œæ¯•\n"));
 		sendFrame(Public::RequestTypes::ACK, -1);
 	}
 	else if (currFrame.request == Public::RequestTypes::ACK)
 	{
-		// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡
+		// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§
 		std::ostringstream sout;
-		sout << "½ÓÊÕµ½ACKĞÅºÅ£¬ÓÉÓÚ´¦ÓÚ¿ÕÏĞ×´Ì¬£¬²»Ó¦ÊÜµ½ACKĞÅºÅ£¬½«Å×Æú¸ÃÖ¡" << std::endl;
+		sout << "æ¥æ”¶åˆ°ACKä¿¡å·ï¼Œç”±äºå¤„äºç©ºé—²çŠ¶æ€ï¼Œä¸åº”å—åˆ°ACKä¿¡å·ï¼Œå°†æŠ›å¼ƒè¯¥å¸§" << std::endl;
 		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 	}
 }
@@ -172,12 +203,12 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 {
 	if (currFrame.request == Public::RequestTypes::PKT)
 	{
-		// Ö¡ÂÖÅÌ½ÓÊÕÊı¾İ£¬²¢·µ»Ø¶ÔÓ¦µÄACK
-		// Èç¹ûÊÕµ½Ö¡±àºÅÎªÏ£ÍûÊÕµ½µÄÖ¡±àºÅ£¬Ôò¸üĞÂÏ£ÍûÊÕµ½µÄÖ¡±àºÅ£¬²¢·¢ËÍACKĞÅºÅ£¬²ÎÊıÎªĞÂµÄÏ£ÍûÊÕµ½µÄÖ¡±àºÅ
+		// å¸§è½®ç›˜æ¥æ”¶æ•°æ®ï¼Œå¹¶è¿”å›å¯¹åº”çš„ACK
+		// å¦‚æœæ”¶åˆ°å¸§ç¼–å·ä¸ºå¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·ï¼Œåˆ™æ›´æ–°å¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·ï¼Œå¹¶å‘é€ACKä¿¡å·ï¼Œå‚æ•°ä¸ºæ–°çš„å¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·
 		unsigned int currFrameId(currFrame.id);
 		recievingInfo.recievingData[currFrameId].push_back(std::move(currFrame));
 		std::ostringstream sout;
-		sout << "ÒÑÊÕµ½Êı¾İ°üÖ¡±àºÅÎª" << currFrameId << std::endl;
+		sout << "å·²æ”¶åˆ°æ•°æ®åŒ…å¸§ç¼–å·ä¸º" << currFrameId << std::endl;
 		pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 		if (currFrameId == recievingInfo.waitingFrameId)
@@ -187,7 +218,7 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 			sout.clear();
 			while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
 			{
-				sout << "±àºÅÎª" << recievingInfo.waitingFrameId << "µÄÖ¡ÒÑÔÚÖ¡ÂÖÅÌÖĞ" << std::endl;
+				sout << "ç¼–å·ä¸º" << recievingInfo.waitingFrameId << "çš„å¸§å·²åœ¨å¸§è½®ç›˜ä¸­" << std::endl;
 				++recievingInfo.currFrameNum;
 				recievingInfo.buffFrameId.erase(recievingInfo.waitingFrameId);
 				recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
@@ -195,45 +226,45 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 
 			if (frameState == Public::FrameState::FrameNoError)
 			{
-				sout << "½«Ïò¿Í»§¶Ë·¢ËÍACK(" << (recievingInfo.waitingFrameId - 1) << ")ĞÅºÅ" << std::endl;
+				sout << "å°†å‘å®¢æˆ·ç«¯å‘é€ACK(" << (recievingInfo.waitingFrameId - 1) << ")ä¿¡å·" << std::endl;
 				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
 			}
 
 			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		}
-		// Èç¹ûÊÕµ½Ö¡±àºÅ²»ÊÇÏ£ÍûÊÕµ½µÄÖ¡±àºÅ£¬Ôò×°ÈëÖ¡ÂÖÅÌÖĞ£¬²¢·¢ËÍACKĞÅºÅ£¬²ÎÊıÎªÏ£ÍûÊÕµ½µÄÖ¡±àºÅ
+		// å¦‚æœæ”¶åˆ°å¸§ç¼–å·ä¸æ˜¯å¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·ï¼Œåˆ™è£…å…¥å¸§è½®ç›˜ä¸­ï¼Œå¹¶å‘é€ACKä¿¡å·ï¼Œå‚æ•°ä¸ºå¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·
 		else
 		{
 			recievingInfo.buffFrameId.insert(currFrameId);
 			sout.clear();
-			sout << "Ï£ÍûÊÕµ½µÄÖ¡±àºÅÎª" << recievingInfo.waitingFrameId << "£¬½«¸ÃÖ¡×°ÈëÖ¡ÂÖÅÌÖĞ" << std::endl;
+			sout << "å¸Œæœ›æ”¶åˆ°çš„å¸§ç¼–å·ä¸º" << recievingInfo.waitingFrameId << "ï¼Œå°†è¯¥å¸§è£…å…¥å¸§è½®ç›˜ä¸­" << std::endl;
 			if (frameState == Public::FrameState::FrameNoError)
 			{
-				sout << "½«Ïò¿Í»§¶Ë·¢ËÍACK(" << recievingInfo.waitingFrameId << ")ĞÅºÅ" << std::endl;
+				sout << "å°†å‘å®¢æˆ·ç«¯å‘é€ACK(" << recievingInfo.waitingFrameId << ")ä¿¡å·" << std::endl;
 				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId);
 			}
 			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		}
 
-		// Èç¹ûÊı¾İ½ÓÊÕÍê±Ï£¬ÏòÉÏ¼¶·¢ËÍÊı¾İ²¢×ªÒÆµ½¿ÕÏĞ×´Ì¬£¬²¢·µ»ØACK(-1)Ê¾Òâ¶Ô·½·¢ËÍÍê±Ï
+		// å¦‚æœæ•°æ®æ¥æ”¶å®Œæ¯•ï¼Œå‘ä¸Šçº§å‘é€æ•°æ®å¹¶è½¬ç§»åˆ°ç©ºé—²çŠ¶æ€ï¼Œå¹¶è¿”å›ACK(-1)ç¤ºæ„å¯¹æ–¹å‘é€å®Œæ¯•
 		if (recievingInfo.currFrameNum == recievingInfo.totalFrameNum)
 		{
 			std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingInfo.recievingData));
-			pushMsg(QString::fromLocal8Bit("ÒÑÊÕµ½ËùÓĞÊı¾İ°ü£¬Ïò·şÎñÆ÷ÍÆËÍÊı¾İ£¬×ªÈë¿ÕÏĞ×´Ì¬\n"));
+			pushMsg(QString::fromLocal8Bit("å·²æ”¶åˆ°æ‰€æœ‰æ•°æ®åŒ…ï¼Œå‘æœåŠ¡å™¨æ¨é€æ•°æ®ï¼Œè½¬å…¥ç©ºé—²çŠ¶æ€\n"));
 			emit pushData(std::move(data.second));
 			threadState = Public::ThreadState::Idle;
 
 			if (frameState == Public::FrameState::NoReply)
 				return;
 
-			pushMsg(QString::fromLocal8Bit("Ïò¿Í»§¶Ë·¢ËÍACK(-1)ĞÅºÅ£¬Ê¾ÒâËùÓĞÊı¾İÒÑ½ÓÊÕÍê±Ï\n"));
+			pushMsg(QString::fromLocal8Bit("å‘å®¢æˆ·ç«¯å‘é€ACK(-1)ä¿¡å·ï¼Œç¤ºæ„æ‰€æœ‰æ•°æ®å·²æ¥æ”¶å®Œæ¯•\n"));
 			sendFrame(Public::RequestTypes::ACK, -1);
 		}
 	}
 	else
 	{
-		// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡
-		emit pushMsg(QString::fromLocal8Bit("½ÓÊÕµ½ACKĞÅºÅ»òSYNĞÅºÅ£¬ÓÉÓÚ´¦ÓÚ½ÓÊÕ×´Ì¬£¬²»Ó¦ÊÕµ½PKTÒÔÍâµÄĞÅºÅ£¬½«Å×Æú¸ÃÖ¡\n"));
+		// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§
+		emit pushMsg(QString::fromLocal8Bit("æ¥æ”¶åˆ°ACKä¿¡å·æˆ–SYNä¿¡å·ï¼Œç”±äºå¤„äºæ¥æ”¶çŠ¶æ€ï¼Œä¸åº”æ”¶åˆ°PKTä»¥å¤–çš„ä¿¡å·ï¼Œå°†æŠ›å¼ƒè¯¥å¸§\n"));
 	}
 }
 
@@ -244,38 +275,37 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 		unsigned int data(Public::str2ui(currFrame.data));
 		if (data == -1)
 		{
-			// ³õÊ¼»¯·¢ËÍ²Û£¬²¢×ªÈë·¢ËÍ×´Ì¬
-			emit pushMsg(QString::fromLocal8Bit("ÒÑÊÕµ½ACK(-1)ĞÅºÅ£¬×ªÈë·¢ËÍÊı¾İ°ü×´Ì¬"));
+			// åˆå§‹åŒ–å‘é€æ§½ï¼Œå¹¶è½¬å…¥å‘é€çŠ¶æ€
+			emit pushMsg(QString::fromLocal8Bit("å·²æ”¶åˆ°ACK(-1)ä¿¡å·ï¼Œè½¬å…¥å‘é€æ•°æ®åŒ…çŠ¶æ€"));
 
-			sendingInfo.lastAcceptId = -1;
-			sendingInfo.lastSendedId = -1;
+			sendingInfo.lastAcceptId = sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
 		} 
 		else 
 		{
-			// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡
+			// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§
 			std::ostringstream sout;
-			sout << "½ÓÊÕµ½ACK(" << data << ")ĞÅºÅ£¬ÓÉÓÚ´¦ÓÚµÈ´ı·¢ËÍ×´Ì¬£¬²»Ó¦ÊÕµ½ACK(-1)ÒÔÍâµÄĞÅºÅ£¬½«Å×Æú¸ÃÖ¡" << std::endl;
+			sout << "æ¥æ”¶åˆ°ACK(" << data << ")ä¿¡å·ï¼Œç”±äºå¤„äºç­‰å¾…å‘é€çŠ¶æ€ï¼Œä¸åº”æ”¶åˆ°ACK(-1)ä»¥å¤–çš„ä¿¡å·ï¼Œå°†æŠ›å¼ƒè¯¥å¸§" << std::endl;
 			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		}
 	}
 	else if (currFrame.request == Public::RequestTypes::SYN)
 	{
-		// Èç¹ûÊÕµ½SYN±íÊ¾¶Ô·½Ò²×ªÒÆµ½ÁË´ı·¢ËÍ×´Ì¬
+		// å¦‚æœæ”¶åˆ°SYNè¡¨ç¤ºå¯¹æ–¹ä¹Ÿè½¬ç§»åˆ°äº†å¾…å‘é€çŠ¶æ€
 		if (isServer)
 		{
-			emit pushMsg(QString::fromLocal8Bit("½ÓÊÕµ½SYNĞÅºÅ£¬ÓÉÓÚ´¦ÓÚµÈ´ı·¢ËÍ×´Ì¬£¬·şÎñÆ÷ÓÅÏÈ·¢ËÍ£¬×ªÈë·¢ËÍÊı¾İ°ü×´Ì¬"));
-			// Èç¹û±¾Ïß³ÌÊÇ·şÎñÆ÷Ïß³Ì
-			// ³õÊ¼»¯·¢ËÍ²Û£¬²¢×ªÈë·¢ËÍ×´Ì¬
+			emit pushMsg(QString::fromLocal8Bit("æ¥æ”¶åˆ°SYNä¿¡å·ï¼Œç”±äºå¤„äºç­‰å¾…å‘é€çŠ¶æ€ï¼ŒæœåŠ¡å™¨ä¼˜å…ˆå‘é€ï¼Œè½¬å…¥å‘é€æ•°æ®åŒ…çŠ¶æ€"));
+			// å¦‚æœæœ¬çº¿ç¨‹æ˜¯æœåŠ¡å™¨çº¿ç¨‹
+			// åˆå§‹åŒ–å‘é€æ§½ï¼Œå¹¶è½¬å…¥å‘é€çŠ¶æ€
 			sendingInfo.lastAcceptId = 0;
 			sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
 		}
 		else 
 		{
-			emit pushMsg(QString::fromLocal8Bit("½ÓÊÕµ½SYNĞÅºÅ£¬ÓÉÓÚ´¦ÓÚµÈ´ı·¢ËÍ×´Ì¬£¬·şÎñÆ÷ÓÅÏÈ·¢ËÍ£¬¿Í»§¶ËµÄ·¢ËÍÇëÇó×èÈûÖ´ĞĞ£¬½«×ªÈë½ÓÊÕÊı¾İ°ü×´Ì¬"));
-			// Èç¹û±¾Ïß³ÌÊÇ¿Í»§¶ËÏß³Ì
-			// Ôò³õÊ¼»¯½ÓÊÕ²Û£¬²¢×ªÒÆµ½½ÓÊÕ×´Ì¬£¬²¢·¢ËÍACK(-1)Ê¾Òâ¶Ô·½¿É·¢ËÍÊı¾İ°ü
+			emit pushMsg(QString::fromLocal8Bit("æ¥æ”¶åˆ°SYNä¿¡å·ï¼Œç”±äºå¤„äºç­‰å¾…å‘é€çŠ¶æ€ï¼ŒæœåŠ¡å™¨ä¼˜å…ˆå‘é€ï¼Œå®¢æˆ·ç«¯çš„å‘é€è¯·æ±‚é˜»å¡æ‰§è¡Œï¼Œå°†è½¬å…¥æ¥æ”¶æ•°æ®åŒ…çŠ¶æ€"));
+			// å¦‚æœæœ¬çº¿ç¨‹æ˜¯å®¢æˆ·ç«¯çº¿ç¨‹
+			// åˆ™åˆå§‹åŒ–æ¥æ”¶æ§½ï¼Œå¹¶è½¬ç§»åˆ°æ¥æ”¶çŠ¶æ€ï¼Œå¹¶å‘é€ACK(-1)ç¤ºæ„å¯¹æ–¹å¯å‘é€æ•°æ®åŒ…
 			recievingInfo.waitingFrameId = recievingInfo.currFrameNum = 0;
 			recievingInfo.buffFrameId.clear();
 			for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
@@ -283,22 +313,22 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			recievingInfo.totalFrameNum = Public::str2ui(currFrame.data);
 
 			std::ostringstream sout;
-			sout << "½ÓÊÕµ½Êı¾İ·¢ËÍÇëÇó£¬¹²" << recievingInfo.totalFrameNum << "¸ö°ü£¬×ªÈë½ÓÊÕÊı¾İ°ü×´Ì¬" << std::endl;
+			sout << "æ¥æ”¶åˆ°æ•°æ®å‘é€è¯·æ±‚ï¼Œå…±" << recievingInfo.totalFrameNum << "ä¸ªåŒ…ï¼Œè½¬å…¥æ¥æ”¶æ•°æ®åŒ…çŠ¶æ€" << std::endl;
 			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 			threadState = Public::ThreadState::Receieving;
 
-			// ·µ»ØACK(-1)
+			// è¿”å›ACK(-1)
 			if (frameState == Public::FrameState::NoReply)
 				return;
 
-			emit pushMsg(QString::fromLocal8Bit("Ïò¶Ô·½·¢ËÍACKĞÅºÅ£¬Ê¾Òâ¿É·¢ËÍÊı¾İ°ü\n"));
+			emit pushMsg(QString::fromLocal8Bit("å‘å¯¹æ–¹å‘é€ACKä¿¡å·ï¼Œç¤ºæ„å¯å‘é€æ•°æ®åŒ…\n"));
 			sendFrame(Public::RequestTypes::ACK, -1);
 		}
 	}
 	else if (currFrame.request == Public::RequestTypes::PKT)
 	{
-		// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡
-		emit pushMsg(QString::fromLocal8Bit("½ÓÊÕµ½PKTĞÅºÅ£¬ÓÉÓÚ´¦ÓÚµÈ´ı·¢ËÍ×´Ì¬£¬²»Ó¦ÊÕµ½PKTĞÅºÅ£¬½«Å×Æú¸ÃÖ¡\n"));
+		// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§
+		emit pushMsg(QString::fromLocal8Bit("æ¥æ”¶åˆ°PKTä¿¡å·ï¼Œç”±äºå¤„äºç­‰å¾…å‘é€çŠ¶æ€ï¼Œä¸åº”æ”¶åˆ°PKTä¿¡å·ï¼Œå°†æŠ›å¼ƒè¯¥å¸§\n"));
 	}
 }
 
@@ -309,7 +339,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 		unsigned int data(Public::str2ui(currFrame.data));
 		if (data == -1)
 		{
-			// Èç¹ûÊÕµ½ACK(-1)£¬Ôò½«µ±Ç°Êı¾İÂÖÅÌ³ö¶Ó²¢Í£Ö¹ËùÓĞµÄÊı¾İÂÖÅÌ¼ÆÊ±Æ÷£¬È»ºó×ªÒÆµ½¿ÕÏĞ×´Ì¬
+			// å¦‚æœæ”¶åˆ°ACK(-1)ï¼Œåˆ™å°†å½“å‰æ•°æ®è½®ç›˜å‡ºé˜Ÿå¹¶åœæ­¢æ‰€æœ‰çš„æ•°æ®è½®ç›˜è®¡æ—¶å™¨ï¼Œç„¶åè½¬ç§»åˆ°ç©ºé—²çŠ¶æ€
 			sendingInfo.sendingData.pop_front();
 			threadState = Public::ThreadState::Idle;
 			for (unsigned int i(0); i != Public::RouletteSize; ++i)
@@ -317,15 +347,15 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 		}
 		else 
 		{
-			// ·ñÔò£¬Í£Ö¹¸ÕAcceptÊı¾İ°ü¶ÔÓ¦µÄ¼ÆÊ±Æ÷
-			// ÒÆ¶¯·¢ËÍ´°¿Ú£¬²¢½«Êı¾İÂÖÅÌ¶ÓÁĞÏàÓ¦µÄÊı¾İÖ¡³ö¶Ó
+			// å¦åˆ™ï¼Œåœæ­¢åˆšAcceptæ•°æ®åŒ…å¯¹åº”çš„è®¡æ—¶å™¨
+			// ç§»åŠ¨å‘é€çª—å£ï¼Œå¹¶å°†æ•°æ®è½®ç›˜é˜Ÿåˆ—ç›¸åº”çš„æ•°æ®å¸§å‡ºé˜Ÿ
 			while (sendingInfo.lastAcceptId != data)
 			{
 				sendingInfo.lastAcceptId = ++sendingInfo.lastAcceptId % Public::RouletteSize;
 				sendingInfo.sendingData.front()[sendingInfo.lastAcceptId].pop_front();
 				sendingInfo.timers[sendingInfo.lastAcceptId]->stopTimer();
 			}
-			// Èç¹ûÒÑÃ»ÓĞÊı¾İÖ¡´ı·¢ËÍ£¬½«µ±Ç°Êı¾İÂÖÅÌ³ö¶Ó²¢×ªÒÆµ½¿ÕÏĞ×´Ì¬
+			// å¦‚æœå·²æ²¡æœ‰æ•°æ®å¸§å¾…å‘é€ï¼Œå°†å½“å‰æ•°æ®è½®ç›˜å‡ºé˜Ÿå¹¶è½¬ç§»åˆ°ç©ºé—²çŠ¶æ€
 			if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
 			{
 				sendingInfo.sendingData.pop_front();
@@ -337,7 +367,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 	}
 	else 
 	{
-		// ´íÎóÖ¡£¬¶ªÆú¸ÃÖ¡
-		emit pushMsg(QString::fromLocal8Bit("½ÓÊÕµ½PKTĞÅºÅ»òSYNĞÅºÅ£¬ÓÉÓÚ´¦ÓÚ·¢ËÍ×´Ì¬£¬²»Ó¦ÊÕµ½ACKÒÔÍâµÄĞÅºÅ£¬½«Å×Æú¸ÃÖ¡\n"));
+		// é”™è¯¯å¸§ï¼Œä¸¢å¼ƒè¯¥å¸§
+		emit pushMsg(QString::fromLocal8Bit("æ¥æ”¶åˆ°PKTä¿¡å·æˆ–SYNä¿¡å·ï¼Œç”±äºå¤„äºå‘é€çŠ¶æ€ï¼Œä¸åº”æ”¶åˆ°ACKä»¥å¤–çš„ä¿¡å·ï¼Œå°†æŠ›å¼ƒè¯¥å¸§\n"));
 	}
 }

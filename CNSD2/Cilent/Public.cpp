@@ -1,4 +1,4 @@
-#include "Public.h"
+ï»¿#include "Public.h"
 
 Public::DataFrame::DataFrame(QDataStream & in)
 {
@@ -65,10 +65,10 @@ std::string Public::getFrameStateString(State state)
 {
 	static std::map<State, std::string> frameStateString =
 	{
-		std::make_pair(FrameState::FrameNoError, "Õı³£"),
-		std::make_pair(FrameState::Lose, "Ö¡¶ªÊ§"),
-		std::make_pair(FrameState::Wrong, "Ö¡´íÎó"),
-		std::make_pair(FrameState::NoReply, "²»»Ø¸´")
+		std::make_pair(FrameState::FrameNoError, "æ­£å¸¸"),
+		std::make_pair(FrameState::Lose, "å¸§ä¸¢å¤±"),
+		std::make_pair(FrameState::Wrong, "å¸§é”™è¯¯"),
+		std::make_pair(FrameState::NoReply, "ä¸å›å¤")
 	};
 
 	return frameStateString[state];

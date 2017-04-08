@@ -94,9 +94,9 @@ template <class T>
 Public::DataRoulette Public::makeDataRoulette(T data)
 {
 	static auto HasPutAllData([RouletteSize, FrameMaxSize]
-	(const unsigned int i, const unsigned j, const QByteArray &block)->bool
+	(const unsigned int i, const unsigned j, const std::string &dataStr)->bool
 	{
-		return (i * RouletteSize + j) >= block.size();
+		return (i * RouletteSize + j) * FrameMaxSize >= dataStr.size();
 	});
 
 	DataRoulette dataRoulette;
@@ -106,7 +106,7 @@ Public::DataRoulette Public::makeDataRoulette(T data)
 	std::string &dataStr(sout.str());
 	encode(dataStr);
 	std::string::iterator currIt(dataStr.begin());
-	for (unsigned int i(0); !HasPutAllData(i, 0, block); ++i)
+	for (unsigned int i(0); !HasPutAllData(i, 0, dataStr); ++i)
 	{
 		for (unsigned int j(0); j != RouletteSize; ++j)
 		{
