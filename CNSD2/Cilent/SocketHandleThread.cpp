@@ -122,15 +122,14 @@ void SocketHandleThread::dataReceived()
 	}
 }
 
+void SocketHandleThread::PKTTimeOut(unsigned char id)
+{
+	if (id == sendingInfo.lastAcceptId + 1)
+		sendFrame(sendingInfo.sendingData.front()[id].front());
+}
+
 void SocketHandleThread::sendFrames(void)
 {
-	static auto calIdDistance([](const unsigned int lastSendedId, const unsigned int lastAcceptId)->unsigned int
-	{
-		if (lastSendedId < lastAcceptId)
-			return lastSendedId + Public::RouletteSize - lastAcceptId;
-		else
-			return lastSendedId - lastAcceptId;
-	});
 	for (;calIdDistance(sendingInfo.lastSendedId, sendingInfo.lastAcceptId) < Public::WindowSize;)
 	{
 		sendingInfo.lastSendedId = ++sendingInfo.lastSendedId % Public::RouletteSize;
@@ -138,7 +137,8 @@ void SocketHandleThread::sendFrames(void)
 		{
 			// 发送窗口内有未发送的数据帧
 			// 发送数据帧，并启动帧对应的计时器
-
+			sendFrame(sendingInfo.sendingData.front()[sendingInfo.lastSendedId].front());
+			sendingInfo.timers[sendingInfo.lastSendedId]->startTimer(Public::MSOfTimePart * 2);
 		}
 	}
 }
@@ -152,6 +152,14 @@ void SocketHandleThread::sendFrame(Public::RequestType requestType, unsigned int
 void SocketHandleThread::sendFrame(const Public::DataFrame & frame)
 {
 	tcpSocket->write(frame.toQByteArray());
+}
+
+unsigned int SocketHandleThread::calIdDistance(const unsigned int lastSendedId, const unsigned int lastAcceptId)
+{
+	if (lastSendedId < lastAcceptId)
+		return lastSendedId + Public::RouletteSize - lastAcceptId;
+	else
+		return lastSendedId - lastAcceptId;
 }
 
 void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState)
@@ -206,59 +214,68 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 		// 帧轮盘接收数据，并返回对应的ACK
 		// 如果收到帧编号为希望收到的帧编号，则更新希望收到的帧编号，并发送ACK信号，参数为新的希望收到的帧编号
 		unsigned int currFrameId(currFrame.id);
-		recievingInfo.recievingData[currFrameId].push_back(std::move(currFrame));
-		std::ostringstream sout;
-		sout << "已收到数据包帧编号为" << currFrameId << std::endl;
-		pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
-		if (currFrameId == recievingInfo.waitingFrameId)
+		if (calIdDistance(currFrameId, recievingInfo.waitingFrameId) >= Public::WindowSize)
 		{
-			++recievingInfo.currFrameNum;
-			recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
-			sout.clear();
-			while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
-			{
-				sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中" << std::endl;
-				++recievingInfo.currFrameNum;
-				recievingInfo.buffFrameId.erase(recievingInfo.waitingFrameId);
-				recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
-			}
-
-			if (frameState == Public::FrameState::FrameNoError)
-			{
-				sout << "将向客户端发送ACK(" << (recievingInfo.waitingFrameId - 1) << ")信号" << std::endl;
-				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
-			}
-
-			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+			// 帧已在数据轮盘中
+			emit pushMsg("该帧已在数据轮盘中，丢弃该数据包\n");
 		}
-		// 如果收到帧编号不是希望收到的帧编号，则装入帧轮盘中，并发送ACK信号，参数为希望收到的帧编号
 		else
 		{
-			recievingInfo.buffFrameId.insert(currFrameId);
-			sout.clear();
-			sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
-			if (frameState == Public::FrameState::FrameNoError)
+			recievingInfo.recievingData[currFrameId].push_back(std::move(currFrame));
+			std::ostringstream sout;
+			sout << "已收到数据包帧编号为" << currFrameId << std::endl;
+			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+
+			if (currFrameId == recievingInfo.waitingFrameId)
 			{
-				sout << "将向客户端发送ACK(" << recievingInfo.waitingFrameId << ")信号" << std::endl;
-				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId);
+				++recievingInfo.currFrameNum;
+				recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
+				sout.clear();
+				while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
+				{
+					sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中" << std::endl;
+					++recievingInfo.currFrameNum;
+					recievingInfo.buffFrameId.erase(recievingInfo.waitingFrameId);
+					recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
+				}
+
+				if (frameState == Public::FrameState::FrameNoError)
+				{
+					sout << "将向客户端发送ACK(" << (recievingInfo.waitingFrameId - 1) << ")信号" << std::endl;
+					sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
+				}
+
+				emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 			}
-			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
-		}
+			// 如果收到帧编号不是希望收到的帧编号，则装入帧轮盘中，并发送ACK信号，参数为希望收到的帧编号
+			else
+			{
+				recievingInfo.buffFrameId.insert(currFrameId);
+				sout.clear();
+				sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
+				if (frameState == Public::FrameState::FrameNoError)
+				{
+					sout << "将向客户端发送ACK(" << recievingInfo.waitingFrameId << ")信号" << std::endl;
+					sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId);
+				}
+				emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+			}
 
-		// 如果数据接收完毕，向上级发送数据并转移到空闲状态，并返回ACK(-1)示意对方发送完毕
-		if (recievingInfo.currFrameNum == recievingInfo.totalFrameNum)
-		{
-			std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingInfo.recievingData));
-			pushMsg(QString::fromLocal8Bit("已收到所有数据包，向服务器推送数据，转入空闲状态\n"));
-			emit pushData(std::move(data.second));
-			threadState = Public::ThreadState::Idle;
+			// 如果数据接收完毕，向上级发送数据并转移到空闲状态，并返回ACK(-1)示意对方发送完毕
+			if (recievingInfo.currFrameNum == recievingInfo.totalFrameNum)
+			{
+				std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingInfo.recievingData));
+				emit pushMsg(QString::fromLocal8Bit("已收到所有数据包，向服务器推送数据，转入空闲状态\n"));
+				emit pushData(std::move(data.second));
+				threadState = Public::ThreadState::Idle;
 
-			if (frameState == Public::FrameState::NoReply)
-				return;
+				if (frameState == Public::FrameState::NoReply)
+					return;
 
-			pushMsg(QString::fromLocal8Bit("向客户端发送ACK(-1)信号，示意所有数据已接收完毕\n"));
-			sendFrame(Public::RequestTypes::ACK, -1);
+				emit pushMsg(QString::fromLocal8Bit("向客户端发送ACK(-1)信号，示意所有数据已接收完毕\n"));
+				sendFrame(Public::RequestTypes::ACK, -1);
+			}
 		}
 	}
 	else
@@ -347,21 +364,29 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 		}
 		else 
 		{
-			// 否则，停止刚Accept数据包对应的计时器
-			// 移动发送窗口，并将数据轮盘队列相应的数据帧出队
-			while (sendingInfo.lastAcceptId != data)
+			if (calIdDistance(id, sendingInfo.lastAcceptId) >= Public::WindowSize)
 			{
-				sendingInfo.lastAcceptId = ++sendingInfo.lastAcceptId % Public::RouletteSize;
-				sendingInfo.sendingData.front()[sendingInfo.lastAcceptId].pop_front();
-				sendingInfo.timers[sendingInfo.lastAcceptId]->stopTimer();
+				// 帧已被确认接收
+				emit pushMsg(QString::fromLocal8Bit("帧已被确认收到，将丢弃该数据包\n"));
 			}
-			// 如果已没有数据帧待发送，将当前数据轮盘出队并转移到空闲状态
-			if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
+			else
 			{
-				sendingInfo.sendingData.pop_front();
-				threadState = Public::ThreadState::Idle;
-				for (unsigned int i(0); i != Public::RouletteSize; ++i)
-					sendingInfo.timers[i]->stopTimer();
+				// 否则，停止刚Accept数据包对应的计时器
+				// 移动发送窗口，并将数据轮盘队列相应的数据帧出队
+				while (sendingInfo.lastAcceptId != data)
+				{
+					sendingInfo.lastAcceptId = ++sendingInfo.lastAcceptId % Public::RouletteSize;
+					sendingInfo.sendingData.front()[sendingInfo.lastAcceptId].pop_front();
+					sendingInfo.timers[sendingInfo.lastAcceptId]->stopTimer();
+				}
+				// 如果已没有数据帧待发送，将当前数据轮盘出队并转移到空闲状态
+				if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
+				{
+					sendingInfo.sendingData.pop_front();
+					threadState = Public::ThreadState::Idle;
+					for (unsigned int i(0); i != Public::RouletteSize; ++i)
+						sendingInfo.timers[i]->stopTimer();
+				}
 			}
 		}
 	}

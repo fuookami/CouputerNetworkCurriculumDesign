@@ -68,6 +68,7 @@ private:
 	void sendFrames(void);
 	void sendFrame(Public::RequestType requestType, unsigned int arg);
 	void sendFrame(const Public::DataFrame &frame);
+	unsigned int calIdDistance(const unsigned int lastSendedId, const unsigned int lastAcceptId);
 
 	void dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
@@ -87,3 +88,9 @@ private:
 
 	volatile bool stopped;
 };
+
+template<class T>
+inline void SocketHandleThread::sendData(const T & data)
+{
+	sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
+}
