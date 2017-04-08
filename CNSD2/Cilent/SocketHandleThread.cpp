@@ -232,9 +232,7 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 	else
 	{
 		// 错误帧，丢弃该帧
-		std::ostringstream sout;
-		sout << "接收到ACK信号或SYN信号，由于处于接收状态，不应受到PKT以外的信号，将抛弃该帧" << std::endl;
-		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+		emit pushMsg(QString::fromLocal8Bit("接收到ACK信号或SYN信号，由于处于接收状态，不应收到PKT以外的信号，将抛弃该帧\n"));
 	}
 }
 
@@ -242,23 +240,64 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 {
 	if (currFrame.request == Public::RequestTypes::ACK)
 	{
-		// 如果收到ACK(-1)转移到发送状态
+		unsigned int data(Public::str2ui(currFrame.data));
+		if (data == -1)
+		{
+			// 初始化发送槽，并转入发送状态
+			emit pushMsg(QString::fromLocal8Bit("已收到ACK(-1)信号，转入发送数据包状态"));
+
+			sendingInfo.waitingAcceptId = 0;
+			sendingInfo.lastSendedId = -1;
+			threadState = Public::ThreadState::Sending;
+		} 
+		else 
+		{
+			// 错误帧，丢弃该帧
+			std::ostringstream sout;
+			sout << "接收到ACK(" << data << ")信号，由于处于等待发送状态，不应收到ACK(-1)以外的信号，将抛弃该帧" << std::endl;
+			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+		}
 	}
 	else if (currFrame.request == Public::RequestTypes::SYN)
 	{
 		// 如果收到SYN表示对方也转移到了待发送状态
 		if (isServer)
 		{
-			//	如果本线程是服务器线程，则转移到发送状态
+			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，转入发送数据包状态"));
+			// 如果本线程是服务器线程
+			// 初始化发送槽，并转入发送状态
+			sendingInfo.waitingAcceptId = 0;
+			sendingInfo.lastSendedId = -1;
+			threadState = Public::ThreadState::Sending;
 		}
 		else 
 		{
-			//	如果本线程是客户端线程，则转移到接收状态，并发送ACK(-1)示意对方可发送数据包
+			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，客户端的发送请求阻塞执行，将转入接收数据包状态"));
+			// 如果本线程是客户端线程
+			// 则初始化接收槽，并转移到接收状态，并发送ACK(-1)示意对方可发送数据包
+			recievingInfo.waitingFrameId = recievingInfo.currFrameNum = 0;
+			recievingInfo.buffFrameId.clear();
+			for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
+				currDeque.clear();
+			recievingInfo.totalFrameNum = Public::str2ui(currFrame.data);
+
+			std::ostringstream sout;
+			sout << "接收到数据发送请求，共" << recievingInfo.totalFrameNum << "个包，转入接收数据包状态" << std::endl;
+			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+			threadState = Public::ThreadState::Receieving;
+
+			// 返回ACK(-1)
+			if (frameState == Public::FrameState::NoReply)
+				return;
+
+			emit pushMsg(QString::fromLocal8Bit("向对方发送ACK信号，示意可发送数据包\n"));
+			sendFrame(Public::RequestTypes::ACK, -1);
 		}
 	}
 	else if (currFrame.request == Public::RequestTypes::PKT)
 	{
 		// 错误帧，丢弃该帧
+		emit pushMsg(QString::fromLocal8Bit("接收到PKT信号，由于处于等待发送状态，不应收到PKT信号，将抛弃该帧\n"));
 	}
 }
 
