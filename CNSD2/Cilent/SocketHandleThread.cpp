@@ -1,5 +1,7 @@
 #include "SocketHandleThread.h"
 
+unsigned int SocketHandleThread::threadCounter = 0;
+
 PKTTimer::PKTTimer(unsigned char _id)
 	: id(_id), timer(new QTimer(nullptr))
 {
@@ -167,34 +169,33 @@ void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame,
 
 void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState)
 {
-	
 	if (currFrame.request == Public::RequestTypes::PKT)
 	{
 		// 帧轮盘接收数据，并返回对应的ACK
 		// 如果收到帧编号为希望收到的帧编号，则更新希望收到的帧编号，并发送ACK信号，参数为新的希望收到的帧编号
 		unsigned int currFrameId(currFrame.id);
-		recievingData[currFrameId].push_back(std::move(currFrame));
+		recievingInfo.recievingData[currFrameId].push_back(std::move(currFrame));
 		std::ostringstream sout;
 		sout << "已收到数据包帧编号为" << currFrameId << std::endl;
 		pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
-		if (currFrameId == waitingFrameId)
+		if (currFrameId == recievingInfo.waitingFrameId)
 		{
-			++currFrameNum;
-			waitingFrameId = ++waitingFrameId % Public::RouletteSize;
+			++recievingInfo.currFrameNum;
+			recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
 			sout.clear();
-			while (!buffFrameId.empty() && buffFrameId.find(waitingFrameId) != buffFrameId.cend())
+			while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
 			{
-				sout << "编号为" << waitingFrameId << "的帧已在帧轮盘中" << std::endl;
-				++currFrameNum;
-				buffFrameId.erase(waitingFrameId);
-				waitingFrameId = ++waitingFrameId % Public::RouletteSize;
+				sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中" << std::endl;
+				++recievingInfo.currFrameNum;
+				recievingInfo.buffFrameId.erase(recievingInfo.waitingFrameId);
+				recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
 			}
 
-			if (currFrameState == Public::FrameState::FrameNoError)
+			if (frameState == Public::FrameState::FrameNoError)
 			{
-				sout << "将向客户端发送ACK(" << (waitingFrameId - 1) << ")信号" << std::endl;
-				emit pushReply(Public::RequestTypes::ACK, waitingFrameId == 0 ? Public::RouletteSize - 1 : waitingFrameId - 1);
+				sout << "将向客户端发送ACK(" << (recievingInfo.waitingFrameId - 1) << ")信号" << std::endl;
+				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
 			}
 
 			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
@@ -202,35 +203,38 @@ void SocketHandleThread::dataReceivedForReceiving(const Public::DataFrame &currF
 		// 如果收到帧编号不是希望收到的帧编号，则装入帧轮盘中，并发送ACK信号，参数为希望收到的帧编号
 		else
 		{
-			buffFrameId.insert(currFrameId);
+			recievingInfo.buffFrameId.insert(currFrameId);
 			sout.clear();
-			sout << "希望收到的帧编号为" << waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
-			if (currFrameState == Public::FrameState::FrameNoError)
+			sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
+			if (frameState == Public::FrameState::FrameNoError)
 			{
-				sout << "将向客户端发送ACK(" << waitingFrameId << ")信号" << std::endl;
-				emit pushReply(Public::RequestTypes::ACK, waitingFrameId);
+				sout << "将向客户端发送ACK(" << recievingInfo.waitingFrameId << ")信号" << std::endl;
+				sendFrame(Public::RequestTypes::ACK, recievingInfo.waitingFrameId);
 			}
 			pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		}
 
 		// 如果数据接收完毕，向上级发送数据并转移到空闲状态，并返回ACK(-1)示意对方发送完毕
-		if (currFrameNum == totalFrameNum)
+		if (recievingInfo.currFrameNum == recievingInfo.totalFrameNum)
 		{
-			std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingData));
+			std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingInfo.recievingData));
 			pushMsg(QString::fromLocal8Bit("已收到所有数据包，向服务器推送数据，转入空闲状态\n"));
 			emit pushData(std::move(data.second));
-			isSendingDataPackbage = false;
+			threadState = Public::ThreadState::Idle;
 
-			if (currFrameState == Public::FrameState::NoReply)
+			if (frameState == Public::FrameState::NoReply)
 				return;
 
 			pushMsg(QString::fromLocal8Bit("向客户端发送ACK(-1)信号，示意所有数据已接收完毕\n"));
-			emit pushReply(Public::RequestTypes::ACK, -1);
+			sendFrame(Public::RequestTypes::ACK, -1);
 		}
 	}
 	else
 	{
-
+		// 错误帧，丢弃该帧
+		std::ostringstream sout;
+		sout << "接收到ACK信号或SYN信号，由于处于接收状态，不应受到PKT以外的信号，将抛弃该帧" << std::endl;
+		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 	}
 }
 
@@ -256,7 +260,6 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 	{
 		// 错误帧，丢弃该帧
 	}
-
 }
 
 void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFrame, Public::State frameState)
