@@ -29,6 +29,7 @@ SocketHandleThread::SocketHandleThread(QTcpSocket * _tcpSocket, unsigned int _id
 	for (unsigned int i(0), j(sendingInfo.timers.size()); i != j; ++i)
 	{
 		sendingInfo.timers[i] = new PKTTimer(i);
+		connect(sendingInfo.timers[i], SIGNAL(timeoutSignal(unsigned char)), this, SLOT(PKTTimeOut(unsigned char)));
 	}
 }
 
@@ -246,7 +247,7 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			// 初始化发送槽，并转入发送状态
 			emit pushMsg(QString::fromLocal8Bit("已收到ACK(-1)信号，转入发送数据包状态"));
 
-			sendingInfo.waitingAcceptId = 0;
+			sendingInfo.lastAcceptId = -1;
 			sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
 		} 
@@ -266,7 +267,7 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，转入发送数据包状态"));
 			// 如果本线程是服务器线程
 			// 初始化发送槽，并转入发送状态
-			sendingInfo.waitingAcceptId = 0;
+			sendingInfo.lastAcceptId = 0;
 			sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
 		}
@@ -303,6 +304,40 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 
 void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFrame, Public::State frameState)
 {
-	// 如果发送完毕或收到ACK(-1)，则将当前数据轮盘出队并转移到空闲状态
-	// 否则，停止刚Accept数据包对应的计时器，并移动发送窗口，并发送新的数据包
+	if (currFrame.request == Public::RequestTypes::ACK)
+	{
+		unsigned int data(Public::str2ui(currFrame.data));
+		if (data == -1)
+		{
+			// 如果收到ACK(-1)，则将当前数据轮盘出队并停止所有的数据轮盘计时器，然后转移到空闲状态
+			sendingInfo.sendingData.pop_front();
+			threadState = Public::ThreadState::Idle;
+			for (unsigned int i(0); i != Public::RouletteSize; ++i)
+				sendingInfo.timers[i]->stopTimer();
+		}
+		else 
+		{
+			// 否则，停止刚Accept数据包对应的计时器
+			// 移动发送窗口，并将数据轮盘队列相应的数据帧出队
+			while (sendingInfo.lastAcceptId != data)
+			{
+				sendingInfo.lastAcceptId = ++sendingInfo.lastAcceptId % Public::RouletteSize;
+				sendingInfo.sendingData.front()[sendingInfo.lastAcceptId].pop_front();
+				sendingInfo.timers[sendingInfo.lastAcceptId]->stopTimer();
+			}
+			// 如果已没有数据帧待发送，将当前数据轮盘出队并转移到空闲状态
+			if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
+			{
+				sendingInfo.sendingData.pop_front();
+				threadState = Public::ThreadState::Idle;
+				for (unsigned int i(0); i != Public::RouletteSize; ++i)
+					sendingInfo.timers[i]->stopTimer();
+			}
+		}
+	}
+	else 
+	{
+		// 错误帧，丢弃该帧
+		emit pushMsg(QString::fromLocal8Bit("接收到PKT信号或SYN信号，由于处于发送状态，不应收到ACK以外的信号，将抛弃该帧\n"));
+	}
 }

@@ -6,23 +6,6 @@
 #include <QtCore/QThread>
 #include <QtNetwork/QTcpSocket>
 
-struct RecievingInfo
-{
-	unsigned int waitingFrameId;
-	unsigned int totalFrameNum;
-	unsigned int currFrameNum;
-	std::set<unsigned int> buffFrameId;
-	Public::DataRoulette recievingData;
-};
-
-struct SendingInfo
-{
-	unsigned int waitingAcceptId;
-	unsigned int lastSendedId;
-	Public::DataDeque sendingData;
-	std::array<PKTTimer *, Public::RouletteSize> timers;
-};
-
 class PKTTimer : public QObject
 {
 	Q_OBJECT;
@@ -41,6 +24,23 @@ signals:
 private:
 	QTimer *timer;
 	unsigned char id;
+};
+
+struct RecievingInfo
+{
+	unsigned int waitingFrameId;
+	unsigned int totalFrameNum;
+	unsigned int currFrameNum;
+	std::set<unsigned int> buffFrameId;
+	Public::DataRoulette recievingData;
+};
+
+struct SendingInfo
+{
+	unsigned int lastAcceptId;
+	unsigned int lastSendedId;
+	Public::DataDeque sendingData;
+	std::array<PKTTimer *, Public::RouletteSize> timers;
 };
 
 class SocketHandleThread : public QThread
