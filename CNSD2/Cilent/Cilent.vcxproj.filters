@@ -41,14 +41,14 @@
     <ClCompile Include="Public.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AbstractSocketHandleThread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_AbstractSocketHandleThread.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_SocketHandleThread.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_AbstractSocketHandleThread.cpp">
+    <ClCompile Include="GeneratedFiles\Release\moc_SocketHandleThread.cpp">
       <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketHandleThread.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,7 +57,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="AbstractSocketHandleThread.h">
+    <CustomBuild Include="SocketHandleThread.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -48,7 +48,7 @@ class SocketHandleThread : public QThread
 	Q_OBJECT;
 
 public:
-	SocketHandleThread(QTcpSocket *_tcpSocket, unsigned int id);
+	SocketHandleThread(QTcpSocket *_tcpSocket, unsigned int id, bool _isServer);
 	void start();
 	template<class T>
 	void sendData(const T &data);
@@ -69,13 +69,15 @@ private:
 	void sendFrames(void);
 	void sendFrame(Public::RequestType requestType, unsigned int data);
 
-	void dataReceivedForIdea(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
+	void dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForWaitSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 
 private:
 	static unsigned int threadCounter;
+	unsigned int id;
+	bool isServer;
 
 	RecievingInfo recievingInfo;
 	SendingInfo sendingInfo;
