@@ -31,6 +31,7 @@ SocketHandleThread::SocketHandleThread(QTcpSocket * _tcpSocket, unsigned int _id
 		sendingInfo.timers[i] = new PKTTimer(i);
 		connect(sendingInfo.timers[i], SIGNAL(timeoutSignal(unsigned char)), this, SLOT(PKTTimeOut(unsigned char)));
 	}
+	connect(tcpSocket, SIGNAL(disconnect()), this, SLOT(socketDisconnectedSlot()));
 }
 
 void SocketHandleThread::start()
@@ -39,17 +40,48 @@ void SocketHandleThread::start()
 	run();
 }
 
+void SocketHandleThread::stop()
+{
+	if (sendingInfo.sendingData.size() == 1 
+		&& (Public::ThreadState::Sending || Public::ThreadState::WaitForSending))
+	{
+		stopped = true;
+		emit pushMsg(QString::fromLocal8Bit("数据队列中只有一个数据包正在发送，待该数据包发送完毕后，管程进入准备关闭状态"));
+	}
+	else if (!sendingInfo.sendingData.empty())
+	{
+		emit pushMsg(QString::fromLocal8Bit("数据队列中有数据包待发送，管程进入准备关闭状态失败"));
+	}
+	else
+	{
+		stopped = true;
+		switch (threadState)
+		{
+		case Public::ThreadState::Receieving:
+			emit pushMsg(QString::fromLocal8Bit("数据队列为空，待该数据包接收完毕后，管程进入准备关闭状态"));
+			break;
+		case Public::ThreadState::Idle:
+			emit pushMsg(QString::fromLocal8Bit("数据队列为空，且目前为空闲状态，管程进入准备关闭状态"));
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 void SocketHandleThread::run()
 {
+	emit pushMsg(QString::fromLocal8Bit("管程进入运行状态，将等待数据包的收发请求。"));
 	connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(dataReceived()));
 
-	while (!stopped)
+	while (threadState == Public::ThreadState::Idle && !stopped)
 	{
 		if (threadState == Public::ThreadState::Idle)
 		{
 			if (!sendingInfo.sendingData.empty())
 			{
 				// 转至准备发送态并发送SYN信号
+				emit pushMsg(QString::fromLocal8Bit("管程目前为空闲状态，并有数据包待发送，将向目标发起发送数据包请求，并转入等待发送状态"));
 				threadState = Public::ThreadState::WaitForSending;
 				sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 			}
@@ -70,6 +102,9 @@ void SocketHandleThread::run()
 			// 等待PKT数据包发送
 		}
 	}
+
+	emit pushMsg(QString::fromLocal8Bit("进入关闭状态"));
+	emit stoped();
 }
 
 void SocketHandleThread::dataReceived()
@@ -125,7 +160,17 @@ void SocketHandleThread::dataReceived()
 void SocketHandleThread::PKTTimeOut(unsigned char id)
 {
 	if (id == sendingInfo.lastAcceptId + 1)
+	{
+		std::ostringstream sout;
+		sout << "编号为" << id << "的数据帧等待回复超时，将重新发送" << std::endl;
+		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		sendFrame(sendingInfo.sendingData.front()[id].front());
+	}
+}
+
+void SocketHandleThread::socketDisconnectedSlot()
+{
+	emit socketDisconnected(id);
 }
 
 void SocketHandleThread::sendFrames(void)
@@ -137,6 +182,8 @@ void SocketHandleThread::sendFrames(void)
 		{
 			// 发送窗口内有未发送的数据帧
 			// 发送数据帧，并启动帧对应的计时器
+			std::ostringstream sout;
+			sout << "发现编号为" << sendingInfo.lastSendedId << "的数据帧在窗口内且未被发送，将发送" << std::endl;
 			sendFrame(sendingInfo.sendingData.front()[sendingInfo.lastSendedId].front());
 			sendingInfo.timers[sendingInfo.lastSendedId]->startTimer(Public::MSOfTimePart * 2);
 		}

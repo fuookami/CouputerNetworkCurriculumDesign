@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ServerThread.h"
+#include "SocketHandleThread.h"
 #include <memory>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QTcpServer>

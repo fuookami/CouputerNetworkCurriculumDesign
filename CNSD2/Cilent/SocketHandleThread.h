@@ -48,14 +48,17 @@ class SocketHandleThread : public QThread
 	Q_OBJECT;
 
 public:
-	SocketHandleThread(QTcpSocket *_tcpSocket, unsigned int id, bool _isServer);
+	SocketHandleThread(QTcpSocket *_tcpSocket, unsigned int id = 0, bool _isServer = false);
 	void start();
+	void stop();
 	template<class T>
 	void sendData(const T &data);
 
 signals:
 	void pushMsg(const QString msg);
 	void pushData(const std::string data);
+	void socketDisconnected(unsigned int id);
+	void stoped();
 
 protected:
 	void run();
@@ -63,6 +66,7 @@ protected:
 private slots:
 	void dataReceived(void);
 	void PKTTimeOut(unsigned char id);
+	void socketDisconnectedSlot();
 
 private:
 	void sendFrames(void);
@@ -83,7 +87,7 @@ private:
 	RecievingInfo recievingInfo;
 	SendingInfo sendingInfo;
 
-	Public::State threadState;
+	volatile Public::State threadState;
 	QTcpSocket *tcpSocket;
 
 	volatile bool stopped;
@@ -92,5 +96,13 @@ private:
 template<class T>
 inline void SocketHandleThread::sendData(const T & data)
 {
-	sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
+	if (stopped)
+	{
+		emit pushMsg(QString::fromLocal8Bit("管程已经进入准备关闭状态或已经是关闭状态，将无视该数据发送请求。"));
+	}
+	else 
+	{
+		sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
+	}
 }
+	

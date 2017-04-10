@@ -50,6 +50,9 @@
     <ClCompile Include="SocketHandleThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cilent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Public.h">
@@ -58,6 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="SocketHandleThread.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Cilent.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

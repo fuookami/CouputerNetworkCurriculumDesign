@@ -56,16 +56,7 @@
     <ClCompile Include="GeneratedFiles\Release\moc_Server.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ServerThread.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ServerThread.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="Server.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ServerThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,9 +68,6 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="Server.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ServerThread.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
