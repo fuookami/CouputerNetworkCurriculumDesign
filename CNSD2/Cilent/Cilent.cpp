@@ -29,7 +29,11 @@ Public::RetCode Cilent::connectToHost(const QHostAddress &host, quint16 port,
 	}
 
 	if (tcpSocket->state() == QAbstractSocket::ConnectedState)
+	{
+		handleThread->start();
+		emit pushMsg(QString::fromLocal8Bit("已开启Socket管程\n"));
 		return Public::RetCodes::NoError;
+	}
 	else
 		return Public::RetCodes::ServerLose;
 }
@@ -62,7 +66,7 @@ void Cilent::getData(const std::string data)
 
 void Cilent::connectSucceed()
 {
-	emit pushMsg(QString::fromLocal8Bit("连接成功，可以准备收发数据"));
+	emit pushMsg(QString::fromLocal8Bit("连接成功，可以准备收发数据\n"));
 	disconnect(tcpSocket, SIGNAL(connected()));
 
 	handleThread->start();
@@ -73,8 +77,9 @@ void Cilent::stopThreadSucceed()
 	disconnect(handleThread, SIGNAL(stoped()));
 	connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(disconnectSucceed()));
 	
+	emit pushMsg(QString::fromLocal8Bit("已关闭Socket管程\n"));
 	std::ostringstream sout;
-	emit pushMsg(QString::fromLocal8Bit("正在尝试进行第一次断开连接"));
+	emit pushMsg(QString::fromLocal8Bit("正在尝试进行第一次断开连接\n"));
 	tcpSocket->disconnectFromHost();
 
 	while (state() != QAbstractSocket::UnconnectedState)
@@ -87,7 +92,7 @@ void Cilent::stopThreadSucceed()
 
 void Cilent::disconnectSucceed()
 {
-	emit pushMsg(QString::fromLocal8Bit("断开成功"));
+	emit pushMsg(QString::fromLocal8Bit("断开成功\n"));
 	disconnect(tcpSocket, SIGNAL(disconnected()));
 }
 
@@ -96,13 +101,13 @@ void Cilent::getStateChangedMsg(QAbstractSocket::SocketState socketState)
 	switch (socketState)
 	{
 	case QAbstractSocket::HostLookupState:
-		emit pushMsg(QString::fromLocal8Bit("已经找到目标服务器"));
+		emit pushMsg(QString::fromLocal8Bit("已经找到目标服务器\n"));
 		break;
 	case QAbstractSocket::ConnectingState:
-		emit pushMsg(QString::fromLocal8Bit("正在尝试连接"));
+		emit pushMsg(QString::fromLocal8Bit("正在尝试连接\n"));
 		break;
 	case QAbstractSocket::ClosingState:
-		emit pushMsg(QString::fromLocal8Bit("正在尝试断开与服务器的连接"));
+		emit pushMsg(QString::fromLocal8Bit("正在尝试断开与服务器的连接\n"));
 		break;
 	default:
 		break;
