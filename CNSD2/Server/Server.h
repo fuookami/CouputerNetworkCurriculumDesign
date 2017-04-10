@@ -16,11 +16,15 @@ signals:
 	void pushMsg(const QString &msg);
 
 private slots:
+	void getMsg(const QString &msg, unsigned int id);
+	void getData(const std::string data, unsigned int id);
 	void getConnection();
-	void pushMsgSlot(const QString &msg);
-	void cilentDisconnectedSlot(const unsigned short id);
+	void cilentDisconnected(const unsigned short id);
+
+private:
+	void dispose(const std::string data);
 
 private:
 	QTcpServer *tcpServer;
-	std::map<unsigned int, std::shared_ptr<ServerThread>> tcpSocketThreads;
+	std::map<unsigned int, std::shared_ptr<SocketHandleThread>> tcpSocketThreads;
 };

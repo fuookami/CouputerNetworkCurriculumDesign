@@ -63,7 +63,7 @@ signals:
 protected:
 	void run();
 
-private slots:
+	private slots:
 	void dataReceived(void);
 	void PKTTimeOut(unsigned char id);
 	void socketDisconnectedSlot();
@@ -100,9 +100,9 @@ inline void SocketHandleThread::sendData(const T & data)
 	{
 		emit pushMsg(QString::fromLocal8Bit("管程已经进入准备关闭状态或已经是关闭状态，将无视该数据发送请求。"));
 	}
-	else 
+	else
 	{
 		sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
 	}
 }
-	
+
