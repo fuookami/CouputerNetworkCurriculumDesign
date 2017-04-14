@@ -49,6 +49,7 @@ class SocketHandleThread : public QThread
 
 public:
 	SocketHandleThread(QTcpSocket *_tcpSocket, unsigned int id = 0, bool _isServer = false);
+	static unsigned int getThreadCounter();
 	void start();
 	void stop();
 	template<class T>
@@ -58,7 +59,7 @@ signals:
 	void pushMsg(const QString msg, unsigned int id);
 	void pushData(const std::string data, unsigned int id);
 	void socketDisconnected(unsigned int id);
-	void stoped();
+	void stoped(unsigned int id);
 
 protected:
 	void run();

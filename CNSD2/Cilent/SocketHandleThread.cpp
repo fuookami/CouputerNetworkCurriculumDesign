@@ -34,6 +34,11 @@ SocketHandleThread::SocketHandleThread(QTcpSocket * _tcpSocket, unsigned int _id
 	connect(tcpSocket, SIGNAL(disconnect()), this, SLOT(socketDisconnectedSlot()));
 }
 
+unsigned int SocketHandleThread::getThreadCounter()
+{
+	return threadCounter;
+}
+
 void SocketHandleThread::start()
 {
 	stopped = false;
@@ -104,7 +109,7 @@ void SocketHandleThread::run()
 	}
 
 	emit pushMsg(QString::fromLocal8Bit("进入关闭状态"), id);
-	emit stoped();
+	emit stoped(id);
 }
 
 void SocketHandleThread::dataReceived()

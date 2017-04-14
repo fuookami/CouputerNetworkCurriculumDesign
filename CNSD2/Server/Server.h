@@ -10,19 +10,24 @@ class Server : public QObject
 	Q_OBJECT;
 
 public:
-	Server(const QHostAddress host, quint16 port);
+	Server();
+
+	Public::RetCode listen(const QHostAddress host, quint16 port);
+	Public::RetCode close();
 
 signals:
 	void pushMsg(const QString &msg);
 
 private slots:
-	void getMsg(const QString &msg, unsigned int id);
+	void getMsg(const QString msg, unsigned int id);
 	void getData(const std::string data, unsigned int id);
 	void getConnection();
 	void cilentDisconnected(const unsigned short id);
 
+	void socketHandleThreadStopped();
+
 private:
-	void dispose(const std::string data);
+	std::string dispose(const std::string data);
 
 private:
 	QTcpServer *tcpServer;
