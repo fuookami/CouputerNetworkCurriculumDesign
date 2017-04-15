@@ -21,8 +21,14 @@ Public::RetCode Server::listen(const QHostAddress host, quint16 port)
 Public::RetCode Server::close()
 {
 	if (tcpSocketThreads.empty())
+	{
+		emit pushMsg(QString::fromLocal8Bit("当前没有客户端与服务器连接，将直接关闭服务器。\n"));
 		emit closed();
+	}
 	else {
+		std::ostringstream sout;
+		sout << "当前有" << tcpSocketThreads.size() << "个客户端与服务器连接，将逐个断开链接后再关闭服务器。" << std::endl;
+		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		for (auto & th : tcpSocketThreads)
 		{
 			th.second->stop();
@@ -73,11 +79,10 @@ void Server::getConnection()
 	serverThread->start();
 }
 
-void Server::cilentDisconnected(const unsigned short id)
+void Server::cilentDisconnected(const unsigned int id)
 {
-	std::ostringstream sout;
-	sout << "客户端" << id << "断开连接，关闭对应的处理进程" << std::endl;
-	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+	tcpSocketThreads[id].reset();
+	tcpSocketThreads.erase(id);
 }
 
 void Server::socketHandleThreadStopped(unsigned int id)

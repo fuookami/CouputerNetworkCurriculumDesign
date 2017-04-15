@@ -175,6 +175,8 @@ void SocketHandleThread::PKTTimeOut(unsigned char id)
 
 void SocketHandleThread::socketDisconnectedSlot()
 {
+	stopped = true;
+	emit pushMsg(QString::fromLocal8Bit("客户端断开连接， 进入关闭状态"), id);
 	emit socketDisconnected(id);
 }
 
