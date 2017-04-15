@@ -14,15 +14,23 @@ Public::RetCode Server::listen(const QHostAddress host, quint16 port)
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	connect(tcpServer, SIGNAL(newConnection()), this, SLOT(getConnection()));
+
+	return Public::RetCodes::NoError;
 }
 
 Public::RetCode Server::close()
 {
-	for (auto & th : tcpSocketThreads)
-	{
-		th.second->stop();
-		connect(th.second.get(), SIGNAL(stopped(unsigned int)), this, SLOT(socketHandleThreadStopped(unsigned int)));
+	if (tcpSocketThreads.empty())
+		emit closed();
+	else {
+		for (auto & th : tcpSocketThreads)
+		{
+			th.second->stop();
+			connect(th.second.get(), SIGNAL(stopped(unsigned int)), this, SLOT(socketHandleThreadStopped(unsigned int)));
+		}
 	}
+	
+	return Public::RetCodes::NoError;
 }
 
 void Server::getMsg(const QString msg, unsigned int id)
@@ -35,12 +43,12 @@ void Server::getMsg(const QString msg, unsigned int id)
 void Server::getData(const std::string data, unsigned int id)
 {
 	std::ostringstream sout;
-	sout << "客户端" << id << "有数据传入：" << data << std::endl;
+	sout << "客户端" << id << "有数据传入：" << data << "。准备处理输入数据。" << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	std::string ret(dispose(data));
 	sout.clear();
-	sout << "客户端" << id << "：处理后输入数据后，准备回复" << ret << std::endl;
+	sout << "客户端" << id << "：处理输入数据后，准备回复" << ret << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	tcpSocketThreads[id]->sendData(ret);
@@ -70,6 +78,12 @@ void Server::cilentDisconnected(const unsigned short id)
 	std::ostringstream sout;
 	sout << "客户端" << id << "断开连接，关闭对应的处理进程" << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+}
+
+void Server::socketHandleThreadStopped(unsigned int id)
+{
+	tcpSocketThreads[id].reset();
+	tcpSocketThreads.erase(id);
 }
 
 std::string Server::dispose(const std::string data)

@@ -16,6 +16,7 @@ private slots:
 	void closeClickSlot(void);
 	void listenClickSlot(void);
 	void stopListenClickSlot(void);
+	void serverClosed(void);
 	void showMSG(const QString &msg);
 
 private:
@@ -24,4 +25,5 @@ private:
 private:
 	Ui::ServerWidget *ui;
 	Server *server;
+	bool beClosed;
 };

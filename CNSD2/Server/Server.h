@@ -16,7 +16,8 @@ public:
 	Public::RetCode close();
 
 signals:
-	void pushMsg(const QString &msg);
+	void pushMsg(const QString msg);
+	void closed(void);
 
 private slots:
 	void getMsg(const QString msg, unsigned int id);
@@ -24,7 +25,7 @@ private slots:
 	void getConnection();
 	void cilentDisconnected(const unsigned short id);
 
-	void socketHandleThreadStopped();
+	void socketHandleThreadStopped(unsigned int id);
 
 private:
 	std::string dispose(const std::string data);
