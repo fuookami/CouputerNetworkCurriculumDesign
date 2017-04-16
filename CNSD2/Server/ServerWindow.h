@@ -17,7 +17,7 @@ private slots:
 	void listenClickSlot(void);
 	void stopListenClickSlot(void);
 	void serverClosed(void);
-	void showMSG(const QString &msg);
+	void showMsg(const QString msg);
 
 private:
 	bool checkIsValid(void);

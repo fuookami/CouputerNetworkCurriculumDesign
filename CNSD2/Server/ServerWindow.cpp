@@ -15,7 +15,7 @@ ServerWindow::ServerWindow(QWidget * parent)
 	connect(ui->Listen, SIGNAL(clicked()), this, SLOT(listenClickSlot()));
 	connect(ui->StopListen, SIGNAL(clicked()), this, SLOT(stopListenClickSlot()));
 	connect(server, SIGNAL(closed()), this, SLOT(serverClosed()));
-	connect(server, SIGNAL(pushMsg(const QString)), this, SLOT(getMsg(const QString)));
+	connect(server, SIGNAL(pushMsg(const QString)), this, SLOT(showMsg(const QString)));
 	// msg
 }
 
@@ -56,9 +56,9 @@ void ServerWindow::serverClosed(void)
 		this->close();
 }
 
-void ServerWindow::showMSG(const QString &msg)
+void ServerWindow::showMsg(const QString msg)
 {
-	ui->Log->toPlainText().append(msg);
+	ui->Log->insertPlainText(msg);
 }
 
 bool ServerWindow::checkIsValid(void)
@@ -73,6 +73,9 @@ bool ServerWindow::checkIsValid(void)
 		return pLineEdit->text().toUInt() < 0x00010000;
 	});
 
-	return isValidIPPart(ui->IPP1) && isValidIPPart(ui->IPP2) 
+	if (ui->LocalHostRadios->isChecked())
+		return isValidPort(ui->Port);
+	else
+		return isValidIPPart(ui->IPP1) && isValidIPPart(ui->IPP2)
 		&& isValidIPPart(ui->IPP3) && isValidIPPart(ui->IPP4) && isValidPort(ui->Port);
 }
