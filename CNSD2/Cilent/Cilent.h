@@ -20,6 +20,8 @@ public:
 
 signals:
 	void pushMsg(const QString msg);
+	void connected(void);
+	void disconnected(void);
 
 private slots:
 	void getMsg(const QString msg);

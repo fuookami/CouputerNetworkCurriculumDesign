@@ -47,7 +47,7 @@ void SocketHandleThread::start()
 
 void SocketHandleThread::stop()
 {
-	if (sendingInfo.sendingData.size() == 1 
+	if (sendingInfo.sendingData.size() == 1
 		&& (Public::ThreadState::Sending || Public::ThreadState::WaitForSending))
 	{
 		stopped = true;
@@ -175,12 +175,14 @@ void SocketHandleThread::PKTTimeOut(unsigned char id)
 
 void SocketHandleThread::socketDisconnectedSlot()
 {
+	stopped = true;
+	emit pushMsg(QString::fromLocal8Bit("客户端断开连接， 进入关闭状态"), id);
 	emit socketDisconnected(id);
 }
 
 void SocketHandleThread::sendFrames(void)
 {
-	for (;calIdDistance(sendingInfo.lastSendedId, sendingInfo.lastAcceptId) < Public::WindowSize;)
+	for (; calIdDistance(sendingInfo.lastSendedId, sendingInfo.lastAcceptId) < Public::WindowSize;)
 	{
 		sendingInfo.lastSendedId = ++sendingInfo.lastSendedId % Public::RouletteSize;
 		if (!sendingInfo.sendingData.front()[sendingInfo.lastSendedId].empty())
@@ -229,7 +231,7 @@ void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame,
 		sout << "接收到数据发送请求，共" << recievingInfo.totalFrameNum << "个包，转入接收数据包状态" << std::endl;
 		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 		threadState = Public::ThreadState::Receieving;
-		
+
 		// 返回ACK(-1)
 		if (frameState == Public::FrameState::NoReply)
 			return;
@@ -349,8 +351,8 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 
 			sendingInfo.lastAcceptId = sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
-		} 
-		else 
+		}
+		else
 		{
 			// 错误帧，丢弃该帧
 			std::ostringstream sout;
@@ -370,7 +372,7 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
 		}
-		else 
+		else
 		{
 			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，客户端的发送请求阻塞执行，将转入接收数据包状态"), id);
 			// 如果本线程是客户端线程
@@ -414,7 +416,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 			for (unsigned int i(0); i != Public::RouletteSize; ++i)
 				sendingInfo.timers[i]->stopTimer();
 		}
-		else 
+		else
 		{
 			if (calIdDistance(id, sendingInfo.lastAcceptId) >= Public::WindowSize)
 			{
@@ -442,7 +444,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 			}
 		}
 	}
-	else 
+	else
 	{
 		// 错误帧，丢弃该帧
 		emit pushMsg(QString::fromLocal8Bit("接收到PKT信号或SYN信号，由于处于发送状态，不应收到ACK以外的信号，将抛弃该帧\n"), id);

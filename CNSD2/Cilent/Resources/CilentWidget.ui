@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
+    <width>480</width>
     <height>350</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>450</width>
+    <width>480</width>
     <height>350</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>450</width>
+    <width>480</width>
     <height>350</height>
    </size>
   </property>
@@ -30,7 +30,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>426</width>
+     <width>461</width>
      <height>331</height>
     </rect>
    </property>
@@ -204,7 +204,14 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox"/>
+       <widget class="QSpinBox" name="DataSize">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_6">
@@ -225,6 +232,25 @@
          </size>
         </property>
        </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QLabel" name="label_8">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>信息：</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="Message"/>
       </item>
      </layout>
     </item>
@@ -254,21 +280,28 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="Listen_2">
+       <widget class="QPushButton" name="SendRandomData">
         <property name="text">
          <string>生成随机数据并发送</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="Listen">
+       <widget class="QPushButton" name="SendMessage">
+        <property name="text">
+         <string>发送信息</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Connect">
         <property name="text">
          <string>连接</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="StopListen">
+       <widget class="QPushButton" name="Disconnect">
         <property name="text">
          <string>断开连接</string>
         </property>

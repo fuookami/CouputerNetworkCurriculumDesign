@@ -1,10 +1,10 @@
-#include "cilent2.h"
+#include "CilentWindow.h"
 #include <QtWidgets/QApplication>
 
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	Cilent2 w;
+	CilentWindow w;
 	w.show();
 	return a.exec();
 }
