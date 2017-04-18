@@ -140,23 +140,10 @@
   <ItemGroup>
     <ClCompile Include="Cilent.cpp" />
     <ClCompile Include="CilentWindow.cpp" />
-    <ClCompile Include="GeneratedFiles\Debug\moc_CilentWindow.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_CilentWindow.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Cilent.cpp" />
+    <ClCompile Include="GeneratedFiles\Debug\moc_CilentWindow.cpp" />
+    <ClCompile Include="GeneratedFiles\Debug\moc_SocketHandleThread.cpp" />
     <ClCompile Include="SocketHandleThread.cpp" />
-    <ClCompile Include="GeneratedFiles\Debug\moc_SocketHandleThread.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_SocketHandleThread.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Public.cpp" />
   </ItemGroup>

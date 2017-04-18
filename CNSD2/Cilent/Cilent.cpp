@@ -3,8 +3,8 @@
 Cilent::Cilent()
 	: tcpSocket(new QTcpSocket(nullptr)), handleThread(new SocketHandleThread(tcpSocket))
 {
-	connect(handleThread, SIGNAL(pushMsg(const QString)), this, SLOT(getMsg(const QString)));
-	connect(handleThread, SIGNAL(pushData(const QString)), this, SLOT(getData(const QString)));
+	connect(handleThread, SIGNAL(pushMsg(const QString, unsigned int)), this, SLOT(getMsg(const QString, unsigned int)));
+	connect(handleThread, SIGNAL(pushData(const QString, unsigned int)), this, SLOT(getData(const QString, unsigned int)));
 	connect(tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(getStateChangedMsg(QAbstractSocket::SocketState)));
 }
 
@@ -17,14 +17,14 @@ Public::RetCode Cilent::connectToHost(const QHostAddress &host, quint16 port,
 	connect(tcpSocket, SIGNAL(connected()), this, SLOT(connectSucceed()));
 	std::ostringstream sout;
 	sout << "正在尝试第一次连接，目标为" << host.toString().toStdString() << ":" << port << std::endl;
-	pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 	tcpSocket->connectToHost(host, port);
 
 	for (unsigned int i(1); i != MaxRetryTime && tcpSocket->state() == QAbstractSocket::UnconnectedState; ++i)
 	{
 		sout.clear();
 		sout << "连接失败，" << MSOfOnceTry << "ms后再次尝试第" << i + 1 << " / " << MaxRetryTime << "次连接" << std::endl;
-		pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
+		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 		tcpSocket->waitForConnected(MSOfOnceTry);
 	}
 
@@ -49,32 +49,33 @@ Public::RetCode Cilent::disconnectFromHost()
 		return Public::RetCodes::StateError;
 
 	handleThread->stop();
-	connect(handleThread, SIGNAL(stoped()), this, SLOT(stopThreadSucceed()));
+	connect(handleThread, SIGNAL(stoped(unsigned int)), this, SLOT(stopThreadSucceed(unsigned int)));
 
 	return Public::RetCodes::NoError;
 }
 
-void Cilent::getMsg(const QString msg)
+void Cilent::getMsg(const QString msg, unsigned int id)
 {
 	emit pushMsg(std::move(msg));
 }
 
-void Cilent::getData(const std::string data)
+void Cilent::getData(const std::string data, unsigned int id)
 {
 	emit pushMsg(QString::fromLocal8Bit(data.c_str()));
 }
 
 void Cilent::connectSucceed()
 {
+	emit cilentConnected();
 	emit pushMsg(QString::fromLocal8Bit("连接成功，可以准备收发数据\n"));
 	disconnect(tcpSocket, SIGNAL(connected()));
 
 	handleThread->start();
 }
 
-void Cilent::stopThreadSucceed()
+void Cilent::stopThreadSucceed(unsigned int)
 {
-	disconnect(handleThread, SIGNAL(stoped()));
+	disconnect(handleThread, SIGNAL(stoped(unsigned int)));
 	connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(disconnectSucceed()));
 	
 	emit pushMsg(QString::fromLocal8Bit("已关闭Socket管程\n"));
@@ -92,6 +93,7 @@ void Cilent::stopThreadSucceed()
 
 void Cilent::disconnectSucceed()
 {
+	emit cilentDisconnected();
 	emit pushMsg(QString::fromLocal8Bit("断开成功\n"));
 	disconnect(tcpSocket, SIGNAL(disconnected()));
 }

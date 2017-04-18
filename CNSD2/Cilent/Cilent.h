@@ -20,15 +20,15 @@ public:
 
 signals:
 	void pushMsg(const QString msg);
-	void connected(void);
-	void disconnected(void);
+	void cilentConnected(void);
+	void cilentDisconnected(void);
 
 private slots:
-	void getMsg(const QString msg);
-	void getData(const std::string data);
+	void getMsg(const QString msg, unsigned int id);
+	void getData(const std::string data, unsigned int id);
 
 	void connectSucceed();
-	void stopThreadSucceed();
+	void stopThreadSucceed(unsigned int);
 	void disconnectSucceed();
 	void getStateChangedMsg(QAbstractSocket::SocketState socketState);
 

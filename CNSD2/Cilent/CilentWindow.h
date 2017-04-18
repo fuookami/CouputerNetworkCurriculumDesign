@@ -16,9 +16,9 @@ private slots:
 	void sendRandomData(void);
 	void sendMsg(void);
 	void connectToHost(void);
-	void connected(void);
+	void connectSucceed(void);
 	void disconnectFromHost(void);
-	void disconnected(void);
+	void disconnectSucceed(void);
 	void close(void);
 
 private:

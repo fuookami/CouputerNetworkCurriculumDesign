@@ -31,7 +31,7 @@ SocketHandleThread::SocketHandleThread(QTcpSocket * _tcpSocket, unsigned int _id
 		sendingInfo.timers[i] = new PKTTimer(i);
 		connect(sendingInfo.timers[i], SIGNAL(timeoutSignal(unsigned char)), this, SLOT(PKTTimeOut(unsigned char)));
 	}
-	connect(tcpSocket, SIGNAL(disconnect()), this, SLOT(socketDisconnectedSlot()));
+	connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(socketDisconnectedSlot()));
 }
 
 unsigned int SocketHandleThread::getThreadCounter()

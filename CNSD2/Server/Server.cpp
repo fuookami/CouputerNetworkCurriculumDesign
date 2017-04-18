@@ -71,7 +71,7 @@ void Server::getConnection()
 		std::shared_ptr<SocketHandleThread>(new SocketHandleThread(tcpServer->nextPendingConnection(), thisID))));
 	SocketHandleThread *serverThread(tcpSocketThreads[thisID].get());
 	connect(serverThread, SIGNAL(socketDisconnected(unsigned int)),
-		this, SLOT(cilentDisconnected(unsigned short)));
+		this, SLOT(cilentDisconnected(unsigned int)));
 	connect(serverThread, SIGNAL(pushMsg(const QString, unsigned int)),
 		this, SLOT(getMsg(const QString, unsigned int)));
 	connect(serverThread, SIGNAL(pushData(const std::string, unsigned int)),
