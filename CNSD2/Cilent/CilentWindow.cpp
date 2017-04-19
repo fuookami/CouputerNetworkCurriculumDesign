@@ -1,4 +1,6 @@
 #include "CilentWindow.h"
+#include <random>
+#include <ctime>
 
 CilentWindow::CilentWindow(QWidget * parent)
 	: QMainWindow(parent), beClosed(false)
@@ -31,11 +33,17 @@ void CilentWindow::showMsg(const QString msg)
 
 void CilentWindow::sendRandomData(void)
 {
+	static std::mt19937_64 engine(time(nullptr));
+	std::string data(std::pow(2, 10 * m_pUi->DataSize->value()), '0');
+	for (char & b : data)
+		b = engine() % 256;
+
+	m_pCilent->wirteToHost(data);
 }
 
 void CilentWindow::sendMsg(void)
 {
-
+	m_pCilent->wirteToHost(std::string(m_pUi->Message->text().toLocal8Bit()));
 }
 
 void CilentWindow::connectToHost(void)
