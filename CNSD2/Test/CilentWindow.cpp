@@ -29,6 +29,7 @@ CilentWindow::CilentWindow(QWidget * parent)
 void CilentWindow::showMsg(const QString msg)
 {
 	m_pUi->Log->insertPlainText(msg);
+	qDebug() << QString::fromLocal8Bit("¿Í»§¶Ë£º") << msg;
 }
 
 void CilentWindow::sendRandomData(void)

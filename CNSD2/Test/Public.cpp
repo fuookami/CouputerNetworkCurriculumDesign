@@ -3,33 +3,34 @@
 Public::DataFrame::DataFrame(QDataStream & in)
 {
 	QString qData;
-	in >> id >> request >> checkNum;
-	char *rawData;
-	unsigned int len;
-	in.readBytes(rawData, len);
-	data = std::string(rawData);
+	in >> id >> request >> checkNum >> frameSize;
+	unsigned int len = frameSize == 0 ? Public::FrameMaxSize : frameSize;
+	char *rawData = new char[len];
+	in.readRawData(rawData, len);
+	data = std::string(rawData, rawData + len);
 	delete rawData;
 }
 
 Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt)
 	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
+	frameSize = data.size();
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
-		checkNum += data[i];
+		checkNum += (unsigned char)data[i];
 }
 
 void Public::DataFrame::getQByteArray(QByteArray &block) const
 {
 	QDataStream out(&block, QIODevice::WriteOnly);
-	out << id << request << checkNum;
-	out.writeBytes(data.c_str(), data.size());
+	out << id << request << checkNum << frameSize;
+	out.writeRawData(data.c_str(), data.size());
 }
 
 bool Public::DataFrame::isCorrect(void) const
 {
 	unsigned char tempCheckNum(0);
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
-		tempCheckNum += data[i];
+		tempCheckNum += (unsigned char)data[i];
 	return tempCheckNum == checkNum;
 }
 
@@ -98,8 +99,15 @@ void Public::decode(std::string & data)
 std::string Public::ui2str(unsigned int num)
 {
 	std::string str;
-	for (unsigned int i(0); num != 0; ++i, num >>= 8)
-		str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
+	if (num == 0)
+	{
+		str = std::string("\0");
+	}
+	else 
+	{
+		for (unsigned int i(0); num != 0; ++i, num >>= 8)
+			str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
+	}
 	return std::move(str);
 }
 

@@ -72,6 +72,7 @@ namespace Public
 		unsigned int id;
 		RequestType request;
 		unsigned char checkNum;
+		unsigned char frameSize;
 		std::string data;
 	};
 

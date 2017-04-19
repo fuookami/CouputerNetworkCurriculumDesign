@@ -101,6 +101,7 @@ void SocketHandleThread::dataReceived()
 	Public::DataFrame currFrame(in);
 
 	std::ostringstream sout;
+
 	sout << "当前随机得到的帧状态为" << Public::getFrameStateString(currFrameState) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 
@@ -201,6 +202,7 @@ void SocketHandleThread::sendFrames(void)
 			// 发送数据帧，并启动帧对应的计时器
 			std::ostringstream sout;
 			sout << "发现编号为" << sendingInfo.lastSendedId << "的数据帧在窗口内且未被发送，将发送" << std::endl;
+			emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 			sendFrame(sendingInfo.sendingData.front()[sendingInfo.lastSendedId].front());
 			sendingInfo.timers[sendingInfo.lastSendedId]->startTimer(Public::MSOfTimePart * 2);
 		}
@@ -286,6 +288,8 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 		if (calIdDistance(currFrameId, recievingInfo.waitingFrameId) >= Public::WindowSize)
 		{
 			// 帧已在数据轮盘中
+			// to do
+			// 应当给对方回一句ACK
 			emit pushMsg(QString::fromLocal8Bit("该帧已在数据轮盘中，丢弃该数据包\n"), id);
 		}
 		else
