@@ -68,6 +68,7 @@ private slots:
 	void dataReceived(void);
 	void PKTTimeOut(unsigned char id);
 	void socketDisconnectedSlot();
+	void mainLoop(void);
 
 private:
 	void sendFrames(void);
@@ -76,7 +77,7 @@ private:
 	unsigned int calIdDistance(const unsigned int lastSendedId, const unsigned int lastAcceptId);
 
 	void dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
-	void dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
+	void dataReceivedForReceiving(Public::DataFrame currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForWaitSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 
@@ -90,6 +91,7 @@ private:
 
 	volatile Public::State threadState;
 	QTcpSocket *tcpSocket;
+	QTimer *timePartTimer;
 
 	volatile bool stopped;
 };

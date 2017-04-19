@@ -59,15 +59,16 @@ signals:
 	void pushMsg(const QString msg, unsigned int id);
 	void pushData(const std::string data, unsigned int id);
 	void socketDisconnected(unsigned int id);
-	void stoped(unsigned int);
+	void stoped(unsigned int id);
 
 protected:
 	void run();
 
-	private slots:
+private slots:
 	void dataReceived(void);
 	void PKTTimeOut(unsigned char id);
 	void socketDisconnectedSlot();
+	void mainLoop(void);
 
 private:
 	void sendFrames(void);
@@ -76,7 +77,7 @@ private:
 	unsigned int calIdDistance(const unsigned int lastSendedId, const unsigned int lastAcceptId);
 
 	void dataReceivedForIdle(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
-	void dataReceivedForReceiving(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
+	void dataReceivedForReceiving(Public::DataFrame currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForWaitSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 	void dataReceivedForSending(const Public::DataFrame &currFrame, Public::State frameState = Public::FrameState::FrameNoError);
 
@@ -90,6 +91,7 @@ private:
 
 	volatile Public::State threadState;
 	QTcpSocket *tcpSocket;
+	QTimer *timePartTimer;
 
 	volatile bool stopped;
 };
@@ -101,9 +103,9 @@ inline void SocketHandleThread::sendData(const T & data)
 	{
 		emit pushMsg(QString::fromLocal8Bit("管程已经进入准备关闭状态或已经是关闭状态，将无视该数据发送请求。"), id);
 	}
-	else
+	else 
 	{
 		sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
 	}
 }
-
+	

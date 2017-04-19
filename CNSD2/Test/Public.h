@@ -13,7 +13,7 @@
 
 namespace Public
 {
-	static const unsigned char FrameMaxSize = 255;
+	static const unsigned short FrameMaxSize = 256;
 	static const unsigned char WindowSize = 5;
 	static const unsigned char RouletteSize = WindowSize * 2;
 	static const unsigned char MaxRetryTime(10);
@@ -42,6 +42,7 @@ namespace Public
 	using State = unsigned char;
 	enum ThreadState
 	{
+		Close,
 		Idle,
 		WaitForSending,
 		Sending,
@@ -65,13 +66,12 @@ namespace Public
 		DataFrame(unsigned int id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt);
 		~DataFrame() {}
 
-		QByteArray toQByteArray(void) const;
+		void getQByteArray(QByteArray &block) const;
 		bool isCorrect(void) const;
 
 		unsigned int id;
 		RequestType request;
 		unsigned char checkNum;
-		unsigned char frameSize;
 		std::string data;
 	};
 
@@ -88,6 +88,7 @@ namespace Public
 
 	std::string ui2str(const unsigned int num);
 	unsigned int str2ui(const std::string &str);
+	std::string str2uiHex(const std::string &str);
 };
 
 template <class T>

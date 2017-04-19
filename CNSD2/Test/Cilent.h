@@ -20,6 +20,7 @@ public:
 
 signals:
 	void pushMsg(const QString msg);
+	void serverLose(void);
 	void cilentConnected(void);
 	void cilentDisconnected(void);
 
@@ -35,6 +36,13 @@ private slots:
 private:
 	QTcpSocket *tcpSocket;
 	SocketHandleThread *handleThread;
+	QTimer *connectTimer;
+
+	QHostAddress thisHost;
+	quint16 thisPort;
+	unsigned short thisMSOfOnceTry;
+	unsigned short thisTryTime;
+	unsigned short maxTryTime;
 };
 
 template<class T>

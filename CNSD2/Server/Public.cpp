@@ -2,28 +2,27 @@
 
 Public::DataFrame::DataFrame(QDataStream & in)
 {
-	in >> id >> request >> checkNum >> frameSize;
-	QByteArray rawData;
-	in.readRawData(rawData.data(), frameSize);
-	std::move(rawData.begin(), rawData.end(), data.begin());
+	QString qData;
+	in >> id >> request >> checkNum;
+	char *rawData;
+	unsigned int len;
+	in.readBytes(rawData, len);
+	data = std::string(rawData);
+	delete rawData;
 }
 
 Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt)
-	: id(_id), request(_request), checkNum(0)
+	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
-	std::move(bgIt, edIt, data.begin());
-	frameSize = data.size();
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
 		checkNum += data[i];
 }
 
-QByteArray Public::DataFrame::toQByteArray(void) const
+void Public::DataFrame::getQByteArray(QByteArray &block) const
 {
-	QByteArray block;
 	QDataStream out(&block, QIODevice::WriteOnly);
-	out << id << request << checkNum << frameSize;
+	out << id << request << checkNum;
 	out.writeBytes(data.c_str(), data.size());
-	return std::move(block);
 }
 
 bool Public::DataFrame::isCorrect(void) const
@@ -93,13 +92,13 @@ void Public::decode(std::string & data)
 {
 	unsigned char k(0);
 	for (unsigned char i(0), j(data.size()); i != j; ++i, ++k)
-		data[i] -= k;
+		data[i] = (unsigned char)(data[i] - k);
 }
 
 std::string Public::ui2str(unsigned int num)
 {
 	std::string str;
-	for (unsigned int i(0), j(4); i != j; ++i, num >>= 8)
+	for (unsigned int i(0); num != 0; ++i, num >>= 8)
 		str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
 	return std::move(str);
 }
@@ -107,7 +106,18 @@ std::string Public::ui2str(unsigned int num)
 unsigned int Public::str2ui(const std::string & str)
 {
 	unsigned int num(0);
-	for (unsigned int i(0), j(str.size()); i != j; ++i, num <<= 8)
-		num += str[i];
+	for (unsigned int i(0), j(str.size()); i != j; ++i)
+	{
+		num <<= 8;
+		num += (unsigned char)str[i];
+	}
 	return num;
+}
+
+std::string Public::str2uiHex(const std::string & str)
+{
+	std::ostringstream sout;
+	for (const unsigned char b : str)
+		sout << std::hex << (unsigned int)b;
+	return std::move(sout.str());
 }

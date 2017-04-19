@@ -19,7 +19,7 @@ CilentWindow::CilentWindow(QWidget * parent)
 
 	connect(m_pCilent, SIGNAL(pushMsg(const QString)), this, SLOT(showMsg(const QString)));
 	connect(m_pUi->Connect, SIGNAL(clicked()), this, SLOT(connectToHost()));
-	connect(m_pUi->Close, SIGNAL(clicked()), this, SLOT(close()));
+	connect(m_pUi->Close, SIGNAL(clicked()), this, SLOT(closeSlot()));
 
 	connect(m_pUi->Disconnect, SIGNAL(clicked()), this, SLOT(disconnectFromHost()));
 	connect(m_pUi->SendMessage, SIGNAL(clicked()), this, SLOT(sendMsg()));
@@ -66,6 +66,7 @@ void CilentWindow::connectToHost(void)
 		}
 
 		connect(m_pCilent, SIGNAL(cilentConnected()), this, SLOT(connectSucceed()));
+		connect(m_pCilent, SIGNAL(serverLose()), this, SLOT(connectFail()));
 		m_pCilent->connectToHost(host, port);
 	}
 }
@@ -73,10 +74,19 @@ void CilentWindow::connectToHost(void)
 void CilentWindow::connectSucceed(void)
 {
 	disconnect(m_pCilent, SIGNAL(cilentConnected()));
+	disconnect(m_pCilent, SIGNAL(serverLose()));
 	m_pUi->Close->setEnabled(true);
 	m_pUi->SendMessage->setEnabled(true);
 	m_pUi->SendRandomData->setEnabled(true);
 	m_pUi->Disconnect->setEnabled(true);
+}
+
+void CilentWindow::connectFail(void)
+{
+	disconnect(m_pCilent, SIGNAL(cilentConnected()));
+	disconnect(m_pCilent, SIGNAL(serverLose()));
+	m_pUi->Connect->setEnabled(true);
+	m_pUi->Close->setEnabled(true);
 }
 
 void CilentWindow::disconnectFromHost(void)
@@ -102,20 +112,22 @@ void CilentWindow::disconnectSucceed()
 	m_pUi->Close->setEnabled(true);
 }
 
-void CilentWindow::close(void)
+void CilentWindow::closeSlot(void)
 {
 	if (m_pCilent->state() == QAbstractSocket::UnconnectedState)
 	{
 		this->close();
 	}
-
-	m_pUi->Disconnect->setEnabled(false);
-	m_pUi->SendRandomData->setEnabled(false);
-	m_pUi->SendMessage->setEnabled(false);
-	m_pUi->Close->setEnabled(false);
-	beClosed = true;
-	connect(m_pCilent, SIGNAL(cilentDisconnected()), this, SLOT(disconnectSucceed()));
-	m_pCilent->disconnectFromHost();
+	else 
+	{
+		m_pUi->Disconnect->setEnabled(false);
+		m_pUi->SendRandomData->setEnabled(false);
+		m_pUi->SendMessage->setEnabled(false);
+		m_pUi->Close->setEnabled(false);
+		beClosed = true;
+		connect(m_pCilent, SIGNAL(cilentDisconnected()), this, SLOT(disconnectSucceed()));
+		m_pCilent->disconnectFromHost();
+	}
 }
 
 bool CilentWindow::checkIsValid(void)

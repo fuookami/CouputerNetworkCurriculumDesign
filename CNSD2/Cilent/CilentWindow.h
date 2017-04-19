@@ -17,9 +17,10 @@ private slots:
 	void sendMsg(void);
 	void connectToHost(void);
 	void connectSucceed(void);
+	void connectFail(void);
 	void disconnectFromHost(void);
 	void disconnectSucceed(void);
-	void close(void);
+	void closeSlot(void);
 
 private:
 	bool checkIsValid(void);
