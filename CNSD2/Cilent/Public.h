@@ -93,7 +93,7 @@ namespace Public
 template <class T>
 Public::DataRoulette Public::makeDataRoulette(T data)
 {
-	static auto HasPutAllData([RouletteSize, FrameMaxSize]
+	static auto HasPutAllData([]
 	(const unsigned int i, const unsigned j, const std::string &dataStr)->bool
 	{
 		return (i * RouletteSize + j) * FrameMaxSize >= dataStr.size();
@@ -110,7 +110,7 @@ Public::DataRoulette Public::makeDataRoulette(T data)
 	{
 		for (unsigned int j(0); j != RouletteSize; ++j)
 		{
-			if (HasPutAllData(i, j + 1, block))
+			if (HasPutAllData(i, j + 1, dataStr))
 			{
 				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, dataStr.end()));
 				break;
