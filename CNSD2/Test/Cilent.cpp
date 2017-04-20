@@ -53,6 +53,7 @@ void Cilent::getMsg(const QString msg, unsigned int id)
 void Cilent::getData(const Public::DataType data, unsigned int id)
 {
 	std::string str(Public::data2uiHex(data));
+	str = "接收到的数据为：" + str + "\n";
 	emit pushMsg(QString::fromLocal8Bit(str.c_str()));
 }
 

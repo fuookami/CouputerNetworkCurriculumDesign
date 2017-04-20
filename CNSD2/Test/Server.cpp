@@ -49,12 +49,13 @@ void Server::getMsg(const QString msg, unsigned int id)
 void Server::getData(const Public::DataType data, unsigned int id)
 {
 	std::ostringstream sout;
-	sout << "客户端" << id << "有数据传入：" << Public::data2uiHex(data) << "。准备处理输入数据。" << std::endl;
+	sout << "客户端" << id << "有数据传入：" << Public::data2uiHex(data) << "。" << std::endl;
+	sout << "准备处理客户端" << id << "传入的数据。" << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	std::string ret(dispose(data));
 	sout.str("");
-	sout << "客户端" << id << "：处理输入数据后，准备回复" << ret << std::endl;
+	sout << "客户端" << id << "：处理传入数据后，准备回复" << ret << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	tcpSocketThreads[id]->sendData(std::cbegin(ret), std::cend(ret));

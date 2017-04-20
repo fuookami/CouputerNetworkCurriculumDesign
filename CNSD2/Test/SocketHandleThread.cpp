@@ -157,7 +157,7 @@ void SocketHandleThread::PKTTimeOut(unsigned char id)
 void SocketHandleThread::socketDisconnectedSlot()
 {
 	stopped = true;
-	emit pushMsg(QString::fromLocal8Bit("客户端断开连接， 进入关闭状态"), id);
+	emit pushMsg(QString::fromLocal8Bit("客户端断开连接， 进入关闭状态\n"), id);
 	emit socketDisconnected(id);
 }
 
@@ -170,6 +170,8 @@ void SocketHandleThread::mainLoop(void)
 			// 转至准备发送态并发送SYN信号
 			emit pushMsg(QString::fromLocal8Bit("管程目前为空闲状态，并有数据包待发送，将向目标发起发送数据包请求，并转入等待发送状态\n"), id);
 			threadState = Public::ThreadState::WaitForSending;
+			timePartTimer->stop();
+			timePartTimer->start(Public::MSOfTimePart);
 			sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 		}
 		else 
@@ -177,9 +179,11 @@ void SocketHandleThread::mainLoop(void)
 			timePartTimer->start(Public::MSOfTimePart);
 		}
 	}
-	else if (threadState == Public::ThreadState::Sending)
+	else if (threadState == Public::ThreadState::WaitForSending)
 	{
-		sendFrames();
+		emit pushMsg(QString::fromLocal8Bit("数据发送请求回复超时，将重新发送SYN信号"), id);
+		timePartTimer->start(Public::MSOfTimePart);
+		sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 	}
 	else if (threadState == Public::ThreadState::Idle && stopped)
 	{
@@ -348,13 +352,20 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 
 				emit pushMsg(QString::fromLocal8Bit("向客户端发送ACK(-1)信号，示意所有数据已接收完毕\n"), id);
 				sendFrame(Public::RequestTypes::ACK, (unsigned char)-1);
+
+				timePartTimer->start(Public::MSOfTimePart);
 			}
 		}
+	}
+	else if (currFrame.request == Public::RequestTypes::SYN)
+	{
+		emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，将重新发送ACK(-1)信号，示意对方可以发送\n"), id);
+		sendFrame(Public::RequestTypes::ACK, (unsigned char)-1);
 	}
 	else
 	{
 		// 错误帧，丢弃该帧
-		emit pushMsg(QString::fromLocal8Bit("接收到ACK信号或SYN信号，由于处于接收状态，不应收到PKT以外的信号，将抛弃该帧\n"), id);
+		emit pushMsg(QString::fromLocal8Bit("接收到ACK信号，由于处于接收状态，不应收到ACK信号，将抛弃该帧\n"), id);
 	}
 }
 
@@ -366,10 +377,13 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 		if (data == (unsigned char)-1)
 		{
 			// 初始化发送槽，并转入发送状态
+			timePartTimer->stop();
 			emit pushMsg(QString::fromLocal8Bit("已收到ACK(-1)信号，转入发送数据包状态\n"), id);
 
 			sendingInfo.lastAcceptId = sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
+
+			sendFrames();
 		}
 		else
 		{
@@ -387,15 +401,18 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，转入发送数据包状态"), id);
 			// 如果本线程是服务器线程
 			// 初始化发送槽，并转入发送状态
+			timePartTimer->stop();
 			sendingInfo.lastAcceptId = 0;
 			sendingInfo.lastSendedId = -1;
 			threadState = Public::ThreadState::Sending;
+			sendFrames();
 		}
 		else
 		{
 			emit pushMsg(QString::fromLocal8Bit("接收到SYN信号，由于处于等待发送状态，服务器优先发送，客户端的发送请求阻塞执行，将转入接收数据包状态"), id);
 			// 如果本线程是客户端线程
 			// 则初始化接收槽，并转移到接收状态，并发送ACK(-1)示意对方可发送数据包
+			timePartTimer->stop();
 			recievingInfo.waitingFrameId = recievingInfo.currFrameNum = 0;
 			recievingInfo.buffFrameId.clear();
 			for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
@@ -437,6 +454,8 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 			timePartTimer->start(Public::MSOfTimePart);
 			for (unsigned int i(0); i != Public::RouletteSize; ++i)
 				sendingInfo.timers[i]->stopTimer();
+
+			timePartTimer->start(Public::MSOfTimePart);
 		}
 		else
 		{
@@ -469,6 +488,8 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 					timePartTimer->start(Public::MSOfTimePart);
 					for (unsigned int i(0); i != Public::RouletteSize; ++i)
 						sendingInfo.timers[i]->stopTimer();
+
+					timePartTimer->start(Public::MSOfTimePart);
 				}
 				else 
 				{
