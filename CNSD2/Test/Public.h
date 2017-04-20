@@ -30,6 +30,8 @@ namespace Public
 		NoError,
 		StateError,
 		ServerLose,
+		AllDataReceived = 254,
+		OK = 255,
 	};
 
 	using RequestType = unsigned char;
@@ -57,7 +59,7 @@ namespace Public
 		Wrong,
 		NoReply,
 	};
-	static std::vector<unsigned int> randomNumberMap;
+
 	void generateRandomNumberMap(void);
 	State getRandomFrameState(void);
 	std::string getFrameStateString(State state);

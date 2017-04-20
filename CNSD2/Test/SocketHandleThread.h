@@ -12,7 +12,7 @@ class PKTTimer : public QObject
 
 public:
 	PKTTimer(unsigned char _id);
-	void startTimer(const unsigned short ms = Public::MSOfOnceTry * Public::timeOfRetryTimePart);
+	void startTimer(const unsigned short ms = Public::MSOfOnceTry);
 	void stopTimer();
 
 signals:

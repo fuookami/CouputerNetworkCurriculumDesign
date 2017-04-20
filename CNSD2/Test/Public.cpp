@@ -1,5 +1,7 @@
 ﻿#include "Public.h"
 
+std::vector<unsigned int> randomNumberMap;
+
 Public::DataFrame::DataFrame(QDataStream & in)
 {
 	QString qData;
@@ -43,7 +45,7 @@ unsigned char Public::getRandomWaitWriteTime(void)
 void Public::generateRandomNumberMap(void)
 {
 	for (unsigned int i(0); i != FrameStateNum; ++i)
-		for (unsigned int j(FrameStateNum - 1); j != -1; --j)
+		for (unsigned int j(FrameStateNum - i); j != -1; --j)
 			randomNumberMap.push_back(i);
 }
 
@@ -56,7 +58,7 @@ Public::State Public::getRandomFrameState()
 	if (randomNumberMap.empty())
 		generateRandomNumberMap();
 	
-	unsigned int currNum(d(gen));
+	unsigned int currNum(d(gen) - 1);
 
 	return currNum >= randomNumberMap.size() ? (FrameStateNum - 1) : randomNumberMap[currNum];
 }
