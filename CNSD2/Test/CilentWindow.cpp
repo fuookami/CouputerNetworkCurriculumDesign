@@ -44,7 +44,14 @@ void CilentWindow::sendRandomData(void)
 
 void CilentWindow::sendMsg(void)
 {
-	m_pCilent->wirteToHost(std::string(m_pUi->Message->text().toLocal8Bit()));
+	if (m_pUi->Message->text().isEmpty())
+	{
+		showMsg(QString::fromLocal8Bit("信息不能为空\n"));
+	}
+	else 
+	{
+		m_pCilent->wirteToHost(std::string(m_pUi->Message->text().toLocal8Bit()));
+	}
 }
 
 void CilentWindow::connectToHost(void)
