@@ -171,7 +171,7 @@ void SocketHandleThread::mainLoop(void)
 			emit pushMsg(QString::fromLocal8Bit("管程目前为空闲状态，并有数据包待发送，将向目标发起发送数据包请求，并转入等待发送状态\n"), id);
 			threadState = Public::ThreadState::WaitForSending;
 			timePartTimer->stop();
-			timePartTimer->start(Public::MSOfTimePart);
+			timePartTimer->start(Public::MSOfTimePart * Public::timeOfRetryTimePart);
 			sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 		}
 		else 

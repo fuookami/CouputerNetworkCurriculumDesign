@@ -20,6 +20,7 @@ namespace Public
 	static const unsigned char MaxRetryTime(10);
 	static const unsigned short MSOfOnceTry(1000);
 	static const unsigned char MSOfTimePart(100);
+	static const unsigned char timeOfRetryTimePart(5);
 
 	unsigned char getRandomWaitWriteTime(void);
 

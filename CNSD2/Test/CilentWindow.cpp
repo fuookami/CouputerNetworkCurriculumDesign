@@ -35,7 +35,7 @@ void CilentWindow::showMsg(const QString msg)
 void CilentWindow::sendRandomData(void)
 {
 	static std::mt19937_64 engine(time(nullptr));
-	Public::DataType data(std::pow(2, 10 * m_pUi->DataSize->value()), '0');
+	Public::DataType data(m_pUi->DataSize->value() * 1024, '0');
 	for (unsigned char & b : data)
 		b = engine() % 256;
 
