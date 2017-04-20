@@ -46,10 +46,10 @@ void Server::getMsg(const QString msg, unsigned int id)
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()) + std::move(msg));
 }
 
-void Server::getData(const std::string data, unsigned int id)
+void Server::getData(const Public::DataType data, unsigned int id)
 {
 	std::ostringstream sout;
-	sout << "客户端" << id << "有数据传入：" << data << "。准备处理输入数据。" << std::endl;
+	sout << "客户端" << id << "有数据传入：" << Public::data2uiHex(data) << "。准备处理输入数据。" << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	std::string ret(dispose(data));
@@ -57,7 +57,7 @@ void Server::getData(const std::string data, unsigned int id)
 	sout << "客户端" << id << "：处理输入数据后，准备回复" << ret << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
-	tcpSocketThreads[id]->sendData(ret);
+	tcpSocketThreads[id]->sendData(std::cbegin(ret), std::cend(ret));
 }
 
 void Server::getConnection()
@@ -91,7 +91,7 @@ void Server::socketHandleThreadStopped(unsigned int id)
 	tcpSocketThreads.erase(id);
 }
 
-std::string Server::dispose(const std::string data)
+std::string Server::dispose(const Public::DataType data)
 {
 	unsigned char count(0);
 	for (unsigned int i(0), j(data.size()); i != j; ++i)

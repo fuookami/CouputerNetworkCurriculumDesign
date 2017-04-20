@@ -21,14 +21,14 @@ signals:
 
 private slots:
 	void getMsg(const QString msg, unsigned int id);
-	void getData(const std::string data, unsigned int id);
+	void getData(const Public::DataType data, unsigned int id);
 	void getConnection();
 	void cilentDisconnected(const unsigned int id);
 
 	void socketHandleThreadStopped(unsigned int id);
 
 private:
-	std::string dispose(const std::string data);
+	std::string dispose(const Public::DataType data);
 
 private:
 	QTcpServer *tcpServer;

@@ -52,12 +52,12 @@ public:
 	static unsigned int getThreadCounter();
 	void start();
 	void stop();
-	template<class T>
-	void sendData(const T &data);
+	template<class Iter>
+	void sendData(Iter bgIt, Iter edIt);
 
 signals:
 	void pushMsg(const QString msg, unsigned int id);
-	void pushData(const std::string data, unsigned int id);
+	void pushData(const Public::DataType data, unsigned int id);
 	void socketDisconnected(unsigned int id);
 	void stoped(unsigned int id);
 
@@ -96,8 +96,8 @@ private:
 	volatile bool stopped;
 };
 
-template<class T>
-inline void SocketHandleThread::sendData(const T & data)
+template<class Iter>
+inline void SocketHandleThread::sendData(Iter bgIt, Iter edIt)
 {
 	if (stopped)
 	{
@@ -105,7 +105,7 @@ inline void SocketHandleThread::sendData(const T & data)
 	}
 	else 
 	{
-		sendingInfo.sendingData.push_back(Public::makeDataRoulette<T>(data));
+		sendingInfo.sendingData.push_back(Public::makeDataRoulette(Public::to_datatype(bgIt, edIt)));
 	}
 }
 	

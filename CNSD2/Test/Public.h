@@ -8,6 +8,7 @@
 #include <deque>
 #include <map>
 #include <random>
+#include <iterator>
 #include <QtCore/QDataStream>
 #include <QtCore/QByteArray>
 
@@ -61,6 +62,12 @@ namespace Public
 	std::string getFrameStateString(State state);
 
 	using DataType = std::vector<unsigned char>;
+	template<class Iter>
+	DataType to_datatype(Iter bgIt, Iter edIt)
+	{
+		return DataType(bgIt, edIt);
+	}
+
 	struct DataFrame
 	{
 		DataFrame(QDataStream &in);
@@ -78,11 +85,9 @@ namespace Public
 	};
 
 	using DataRoulette = std::array<std::deque<DataFrame>, 10>;
-	template <class T>
-	DataRoulette makeDataRoulette(T data);
+	DataRoulette makeDataRoulette(DataType data);
 	unsigned int countFrames(const DataRoulette &dataqRoulette);
-	template <class T>
-	std::pair<RequestType, T> readDataRoulette(DataRoulette &dataRoulette);
+	DataType readDataRoulette(DataRoulette &dataRoulette);
 	using DataDeque = std::deque<DataRoulette>;
 
 	void encode(DataType &data);
@@ -93,57 +98,3 @@ namespace Public
 	std::string data2uiHex(const DataType &data);
 };
 
-template <class T>
-Public::DataRoulette Public::makeDataRoulette(T data)
-{
-	static auto HasPutAllData([]
-	(const unsigned int i, const unsigned j, const std::vector<unsigned char> &dataVec)->bool
-	{
-		return (i * RouletteSize + j) * FrameMaxSize >= dataVec.size();
-	});
-
-	DataRoulette dataRoulette;
-
-	std::ostringstream sout;
-	sout << data;
-	DataType dataVec(sout.str().begin(), sout.str().end());
-	encode(dataVec);
-	std::vector<unsigned char>::iterator currIt(dataVec.begin());
-	for (unsigned int i(0); !HasPutAllData(i, 0, dataVec); ++i)
-	{
-		for (unsigned int j(0); j != RouletteSize; ++j)
-		{
-			if (HasPutAllData(i, j + 1, dataVec))
-			{
-				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, dataVec.end()));
-				break;
-			}
-			else
-			{
-				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
-				currIt += FrameMaxSize;
-			}
-		}
-	}
-
-	return std::move(dataRoulette);
-}
-
-template<class T>
-std::pair<Public::RequestType, T> Public::readDataRoulette(DataRoulette & dataRoulette)
-{
-	std::string block;
-	RequestType requestType;
-	T data;
-
-	for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
-	{
-		for (unsigned int k(0), l(dataRoulette[i].size()); k != l; ++k)
-			std::move(dataRoulette[i][k].data.begin(), dataRoulette[i][k].data.end(), block.end());
-		dataRoulette[i].clear();
-	}
-
-	std::istringstream sin(block);
-	sin >> data;
-	return std::make_pair(requestType, std::move(data));
-}

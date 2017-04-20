@@ -225,7 +225,7 @@ void SocketHandleThread::sendFrame(const Public::DataFrame & frame)
 
 unsigned int SocketHandleThread::calIdDistance(const unsigned int lastSendedId, const unsigned int lastAcceptId)
 {
-	if (lastSendedId < lastAcceptId)
+	if (lastSendedId < lastAcceptId && lastAcceptId != -1)
 		return lastSendedId + Public::RouletteSize - lastAcceptId;
 	else
 		return lastSendedId - lastAcceptId;
@@ -337,9 +337,9 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 			// 如果数据接收完毕，向上级发送数据并转移到空闲状态，并返回ACK(-1)示意对方发送完毕
 			if (recievingInfo.currFrameNum == recievingInfo.totalFrameNum)
 			{
-				std::pair<Public::RequestType, std::string> data(Public::readDataRoulette<std::string>(recievingInfo.recievingData));
+				Public::DataType data(Public::readDataRoulette(recievingInfo.recievingData));
 				emit pushMsg(QString::fromLocal8Bit("已收到所有数据包，向服务器推送数据，转入空闲状态\n"), id);
-				emit pushData(std::move(data.second), id);
+				emit pushData(std::move(data), id);
 				threadState = Public::ThreadState::Idle;
 				timePartTimer->start(Public::MSOfTimePart);
 

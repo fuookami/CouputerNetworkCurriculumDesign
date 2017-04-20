@@ -4,7 +4,7 @@ Cilent::Cilent()
 	: tcpSocket(new QTcpSocket(nullptr)), handleThread(new SocketHandleThread(tcpSocket)), connectTimer(new QTimer()), thisMSOfOnceTry(0)
 {
 	connect(handleThread, SIGNAL(pushMsg(const QString, unsigned int)), this, SLOT(getMsg(const QString, unsigned int)));
-	connect(handleThread, SIGNAL(pushData(const std::string, unsigned int)), this, SLOT(getData(const std::string, unsigned int)));
+	connect(handleThread, SIGNAL(pushData(const Public::DataType, unsigned int)), this, SLOT(getData(const Public::DataType, unsigned int)));
 	connect(tcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(getStateChangedMsg(QAbstractSocket::SocketState)));
 }
 
@@ -50,9 +50,10 @@ void Cilent::getMsg(const QString msg, unsigned int id)
 	emit pushMsg(std::move(msg));
 }
 
-void Cilent::getData(const std::string data, unsigned int id)
+void Cilent::getData(const Public::DataType data, unsigned int id)
 {
-	emit pushMsg(QString::fromLocal8Bit(data.c_str()));
+	std::string str(Public::data2uiHex(data));
+	emit pushMsg(QString::fromLocal8Bit(str.c_str()));
 }
 
 void Cilent::connectSucceed()

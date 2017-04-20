@@ -82,6 +82,53 @@ unsigned int Public::countFrames(const DataRoulette & dataqRoulette)
 	return counter;
 }
 
+
+Public::DataRoulette Public::makeDataRoulette(DataType data)
+{
+	static auto HasPutAllData([]
+	(const unsigned int i, const unsigned j, const DataType &data)->bool
+	{
+		return (i * RouletteSize + j) * FrameMaxSize >= data.size();
+	});
+
+	DataRoulette dataRoulette;
+
+	encode(data);
+	DataType::iterator currIt(data.begin());
+	for (unsigned int i(0); !HasPutAllData(i, 0, data); ++i)
+	{
+		for (unsigned int j(0); j != RouletteSize; ++j)
+		{
+			if (HasPutAllData(i, j + 1, data))
+			{
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
+				break;
+			}
+			else
+			{
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
+				currIt += FrameMaxSize;
+			}
+		}
+	}
+
+	return std::move(dataRoulette);
+}
+
+Public::DataType Public::readDataRoulette(DataRoulette & dataRoulette)
+{
+	DataType block;
+
+	for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
+	{
+		for (unsigned int k(0), l(dataRoulette[i].size()); k != l; ++k)
+			std::move(dataRoulette[i][k].data.begin(), dataRoulette[i][k].data.end(), block.end());
+		dataRoulette[i].clear();
+	}
+
+	return std::move(block);
+}
+
 void Public::encode(DataType & data)
 {
 	unsigned char k(0);
