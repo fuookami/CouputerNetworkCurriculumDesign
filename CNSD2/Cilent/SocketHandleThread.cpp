@@ -175,7 +175,7 @@ void SocketHandleThread::mainLoop(void)
 			timePartTimer->start(Public::MSOfTimePart * Public::timeOfRetryTimePart);
 			sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 		}
-		else
+		else 
 		{
 			timePartTimer->start(Public::MSOfTimePart);
 		}
@@ -326,7 +326,7 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				}
 				if (!sout.str().empty())
 					sout << std::endl;
-
+				
 
 				if (frameState == Public::FrameState::FrameNoError)
 				{
@@ -516,7 +516,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 
 					timePartTimer->start(Public::MSOfTimePart);
 				}
-				else
+				else 
 				{
 					sendFrames();
 				}

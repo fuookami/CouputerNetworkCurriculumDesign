@@ -144,6 +144,9 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_Cilent.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_CilentWindow.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_SocketHandleThread.cpp" />
+    <ClCompile Include="GeneratedFiles\Release\moc_Cilent.cpp" />
+    <ClCompile Include="GeneratedFiles\Release\moc_CilentWindow.cpp" />
+    <ClCompile Include="GeneratedFiles\Release\moc_SocketHandleThread.cpp" />
     <ClCompile Include="SocketHandleThread.cpp" />
     <ClCompile Include="CilentMain.cpp" />
     <ClCompile Include="Public.cpp" />
