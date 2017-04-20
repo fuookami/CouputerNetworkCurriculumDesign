@@ -343,10 +343,13 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				recievingInfo.buffFrameId.insert(currFrameId);
 				sout.str("");
 				sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
+				emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 				if (frameState == Public::FrameState::FrameNoError && recievingInfo.currFrameNum != 0)
 				{
+					sout.str("");
 					unsigned int signalId(recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
 					sout << "将向对方发送ACK(" << signalId << ")信号" << std::endl;
+					emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 					sendFrame(Public::RequestTypes::ACK, signalId);
 				}
 				emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
