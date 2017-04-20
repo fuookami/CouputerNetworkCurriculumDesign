@@ -114,13 +114,13 @@ void SocketHandleThread::dataReceived()
 		return;
 	}
 
-	sout.clear();
+	sout.str("");
 	sout << "帧校验正确，数据为：" << Public::data2uiHex(currFrame.data) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 	emit pushMsg(QString::fromLocal8Bit("准备进行解密\n"), id);
 	Public::decode(currFrame.data);
 	emit pushMsg(QString::fromLocal8Bit("解密完成\n"), id);
-	sout.clear();
+	sout.str("");
 	sout << "解密后数据为：" << Public::data2uiHex(currFrame.data) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 
@@ -303,7 +303,7 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 			{
 				++recievingInfo.currFrameNum;
 				recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
-				sout.clear();
+				sout.str("");
 				while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
 				{
 					sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中" << std::endl;
@@ -324,7 +324,7 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 			else
 			{
 				recievingInfo.buffFrameId.insert(currFrameId);
-				sout.clear();
+				sout.str("");
 				sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
 				if (frameState == Public::FrameState::FrameNoError)
 				{
@@ -430,15 +430,17 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 		if (data == -1)
 		{
 			// 如果收到ACK(-1)，则将当前数据轮盘出队并停止所有的数据轮盘计时器，然后转移到空闲状态
-			sendingInfo.sendingData.pop_front();
 			threadState = Public::ThreadState::Idle;
+			emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。"), id);
+
+			sendingInfo.sendingData.pop_front();
 			timePartTimer->start(Public::MSOfTimePart);
 			for (unsigned int i(0); i != Public::RouletteSize; ++i)
 				sendingInfo.timers[i]->stopTimer();
 		}
 		else
 		{
-			if (calIdDistance(id, sendingInfo.lastAcceptId) >= Public::WindowSize)
+			if (calIdDistance(data, sendingInfo.lastAcceptId) >= Public::WindowSize)
 			{
 				// 帧已被确认接收
 				emit pushMsg(QString::fromLocal8Bit("帧已被确认收到，将丢弃该数据包\n"), id);
@@ -450,14 +452,20 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 				while (sendingInfo.lastAcceptId != data)
 				{
 					sendingInfo.lastAcceptId = ++sendingInfo.lastAcceptId % Public::RouletteSize;
+					std::ostringstream sout;
+					sout << "帧" << sendingInfo.lastAcceptId << "已被确认收到" << std::endl;
+					emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
+
 					sendingInfo.sendingData.front()[sendingInfo.lastAcceptId].pop_front();
 					sendingInfo.timers[sendingInfo.lastAcceptId]->stopTimer();
 				}
 				// 如果已没有数据帧待发送，将当前数据轮盘出队并转移到空闲状态
 				if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
 				{
-					sendingInfo.sendingData.pop_front();
 					threadState = Public::ThreadState::Idle;
+					emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。"), id);
+
+					sendingInfo.sendingData.pop_front();
 					timePartTimer->start(Public::MSOfTimePart);
 					for (unsigned int i(0); i != Public::RouletteSize; ++i)
 						sendingInfo.timers[i]->stopTimer();

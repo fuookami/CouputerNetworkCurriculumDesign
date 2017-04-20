@@ -53,7 +53,7 @@ void Server::getData(const Public::DataType data, unsigned int id)
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
 	std::string ret(dispose(data));
-	sout.clear();
+	sout.str("");
 	sout << "客户端" << id << "：处理输入数据后，准备回复" << ret << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()));
 
@@ -74,8 +74,8 @@ void Server::getConnection()
 		this, SLOT(cilentDisconnected(unsigned int)));
 	connect(serverThread, SIGNAL(pushMsg(const QString, unsigned int)),
 		this, SLOT(getMsg(const QString, unsigned int)));
-	connect(serverThread, SIGNAL(pushData(const std::string, unsigned int)),
-		this, SLOT(getData(const std::string, unsigned int)));
+	connect(serverThread, SIGNAL(pushData(const Public::DataType, unsigned int)),
+		this, SLOT(getData(const Public::DataType, unsigned int)));
 	serverThread->start();
 }
 

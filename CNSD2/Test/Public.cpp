@@ -118,12 +118,21 @@ Public::DataRoulette Public::makeDataRoulette(DataType data)
 Public::DataType Public::readDataRoulette(DataRoulette & dataRoulette)
 {
 	DataType block;
+	bool flag(true);
 
-	for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
+	while (flag)
 	{
-		for (unsigned int k(0), l(dataRoulette[i].size()); k != l; ++k)
-			std::move(dataRoulette[i][k].data.begin(), dataRoulette[i][k].data.end(), block.end());
-		dataRoulette[i].clear();
+		for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
+		{
+			if (dataRoulette[i].empty())
+			{
+				flag = false;
+				break;
+			}
+
+			block.insert(block.end(), dataRoulette[i].front().data.cbegin(), dataRoulette[i].front().data.cend());
+			dataRoulette[i].pop_front();
+		}
 	}
 
 	return std::move(block);
