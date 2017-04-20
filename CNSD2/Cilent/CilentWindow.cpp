@@ -29,13 +29,14 @@ CilentWindow::CilentWindow(QWidget * parent)
 void CilentWindow::showMsg(const QString msg)
 {
 	m_pUi->Log->insertPlainText(msg);
+	qDebug() << QString::fromLocal8Bit("客户端：") << msg;
 }
 
 void CilentWindow::sendRandomData(void)
 {
 	static std::mt19937_64 engine(time(nullptr));
-	std::string data(std::pow(2, 10 * m_pUi->DataSize->value()), '0');
-	for (char & b : data)
+	Public::DataType data(m_pUi->DataSize->value() * 1024, '0');
+	for (unsigned char & b : data)
 		b = engine() % 256;
 
 	m_pCilent->wirteToHost(data);
@@ -43,7 +44,14 @@ void CilentWindow::sendRandomData(void)
 
 void CilentWindow::sendMsg(void)
 {
-	m_pCilent->wirteToHost(std::string(m_pUi->Message->text().toLocal8Bit()));
+	if (m_pUi->Message->text().isEmpty())
+	{
+		showMsg(QString::fromLocal8Bit("信息不能为空\n"));
+	}
+	else 
+	{
+		m_pCilent->wirteToHost(std::string(m_pUi->Message->text().toLocal8Bit()));
+	}
 }
 
 void CilentWindow::connectToHost(void)

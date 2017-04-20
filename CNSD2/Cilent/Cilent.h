@@ -26,7 +26,7 @@ signals:
 
 private slots:
 	void getMsg(const QString msg, unsigned int id);
-	void getData(const std::string data, unsigned int id);
+	void getData(const Public::DataType data, unsigned int id);
 
 	void connectSucceed();
 	void stopThreadSucceed(unsigned int);
@@ -51,6 +51,6 @@ inline Public::RetCode Cilent::wirteToHost(const T & data)
 	if (state() != QTcpSocket::ConnectedState)
 		return Public::RetCodes::StateError;
 
-	handleThread->sendData(data);
+	handleThread->sendData(data.cbegin(), data.cend());
 	return Public::RetCodes::NoError;
 }

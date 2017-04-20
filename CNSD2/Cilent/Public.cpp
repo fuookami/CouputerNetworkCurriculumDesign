@@ -1,35 +1,38 @@
 ﻿#include "Public.h"
 
+std::vector<unsigned int> randomNumberMap;
+
 Public::DataFrame::DataFrame(QDataStream & in)
 {
 	QString qData;
-	in >> id >> request >> checkNum;
-	char *rawData;
-	unsigned int len;
-	in.readBytes(rawData, len);
-	data = std::string(rawData);
+	in >> id >> request >> checkNum >> frameSize;
+	unsigned int len = frameSize == 0 ? Public::FrameMaxSize : frameSize;
+	char *rawData = new char[len];
+	in.readRawData(rawData, len);
+	data = std::vector<unsigned char>(rawData, rawData + len);
 	delete rawData;
 }
 
-Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt)
+Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt)
 	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
+	frameSize = data.size();
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
-		checkNum += data[i];
+		checkNum += (unsigned char)data[i];
 }
 
 void Public::DataFrame::getQByteArray(QByteArray &block) const
 {
 	QDataStream out(&block, QIODevice::WriteOnly);
-	out << id << request << checkNum;
-	out.writeBytes(data.c_str(), data.size());
+	out << id << request << checkNum << frameSize;
+	out.writeRawData(reinterpret_cast<char *>(data.begin()._Ptr), data.size());
 }
 
 bool Public::DataFrame::isCorrect(void) const
 {
 	unsigned char tempCheckNum(0);
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
-		tempCheckNum += data[i];
+		tempCheckNum += (unsigned char)data[i];
 	return tempCheckNum == checkNum;
 }
 
@@ -42,7 +45,7 @@ unsigned char Public::getRandomWaitWriteTime(void)
 void Public::generateRandomNumberMap(void)
 {
 	for (unsigned int i(0); i != FrameStateNum; ++i)
-		for (unsigned int j(FrameStateNum - 1); j != -1; --j)
+		for (unsigned int j(FrameStateNum - i); j != -1; --j)
 			randomNumberMap.push_back(i);
 }
 
@@ -55,7 +58,7 @@ Public::State Public::getRandomFrameState()
 	if (randomNumberMap.empty())
 		generateRandomNumberMap();
 	
-	unsigned int currNum(d(gen));
+	unsigned int currNum(d(gen) - 1);
 
 	return currNum >= randomNumberMap.size() ? (FrameStateNum - 1) : randomNumberMap[currNum];
 }
@@ -81,43 +84,108 @@ unsigned int Public::countFrames(const DataRoulette & dataqRoulette)
 	return counter;
 }
 
-void Public::encode(std::string & data)
+
+Public::DataRoulette Public::makeDataRoulette(DataType data)
+{
+	static auto HasPutAllData([]
+	(const unsigned int i, const unsigned j, const DataType &data)->bool
+	{
+		return (i * RouletteSize + j) * FrameMaxSize >= data.size();
+	});
+
+	DataRoulette dataRoulette;
+
+	encode(data);
+	DataType::iterator currIt(data.begin());
+	for (unsigned int i(0); !HasPutAllData(i, 0, data); ++i)
+	{
+		for (unsigned int j(0); j != RouletteSize; ++j)
+		{
+			if (HasPutAllData(i, j + 1, data))
+			{
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
+				break;
+			}
+			else
+			{
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
+				currIt += FrameMaxSize;
+			}
+		}
+	}
+
+	return std::move(dataRoulette);
+}
+
+Public::DataType Public::readDataRoulette(DataRoulette & dataRoulette)
+{
+	DataType block;
+	bool flag(true);
+
+	while (flag)
+	{
+		for (unsigned int i(0), j(dataRoulette.size()); i != j; ++i)
+		{
+			if (dataRoulette[i].empty())
+			{
+				flag = false;
+				break;
+			}
+
+			block.insert(block.end(), dataRoulette[i].front().data.cbegin(), dataRoulette[i].front().data.cend());
+			dataRoulette[i].pop_front();
+		}
+	}
+
+	return std::move(block);
+}
+
+void Public::encode(DataType & data)
 {
 	unsigned char k(0);
 	for (unsigned int i(0), j(data.size()); i != j; ++i, ++k)
 		data[i] += k;
 }
 
-void Public::decode(std::string & data)
+void Public::decode(DataType & data)
 {
 	unsigned char k(0);
 	for (unsigned char i(0), j(data.size()); i != j; ++i, ++k)
 		data[i] = (unsigned char)(data[i] - k);
 }
 
-std::string Public::ui2str(unsigned int num)
+Public::DataType Public::ui2data(unsigned int num)
 {
-	std::string str;
-	for (unsigned int i(0); num != 0; ++i, num >>= 8)
-		str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
-	return std::move(str);
+	DataType data;
+	if (num == 0)
+	{
+		data.push_back(0);
+	}
+	else 
+	{
+		for (unsigned int i(0); num != 0; ++i, num >>= 8)
+			data.insert(data.begin(), (unsigned char)(num & 0x000000ff));
+	}
+	return std::move(data);
 }
 
-unsigned int Public::str2ui(const std::string & str)
+unsigned int Public::data2ui(const DataType & data)
 {
 	unsigned int num(0);
-	for (unsigned int i(0), j(str.size()); i != j; ++i)
+	for (unsigned int i(0), j(data.size()); i != j; ++i)
 	{
 		num <<= 8;
-		num += (unsigned char)str[i];
+		num += (unsigned char)data[i];
 	}
 	return num;
 }
 
-std::string Public::str2uiHex(const std::string & str)
+std::string Public::data2uiHex(const DataType & data)
 {
 	std::ostringstream sout;
-	for (const unsigned char b : str)
-		sout << std::hex << (unsigned int)b;
+	for (unsigned int i(0), j(data.size()); i != j; ++i)
+	{
+		sout << std::hex << (unsigned int)data[i];
+	}		
 	return std::move(sout.str());
 }
