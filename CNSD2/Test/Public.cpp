@@ -7,11 +7,11 @@ Public::DataFrame::DataFrame(QDataStream & in)
 	unsigned int len = frameSize == 0 ? Public::FrameMaxSize : frameSize;
 	char *rawData = new char[len];
 	in.readRawData(rawData, len);
-	data = std::string(rawData, rawData + len);
+	data = std::vector<unsigned char>(rawData, rawData + len);
 	delete rawData;
 }
 
-Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt)
+Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt)
 	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
 	frameSize = data.size();
@@ -23,7 +23,7 @@ void Public::DataFrame::getQByteArray(QByteArray &block) const
 {
 	QDataStream out(&block, QIODevice::WriteOnly);
 	out << id << request << checkNum << frameSize;
-	out.writeRawData(data.c_str(), data.size());
+	out.writeRawData(reinterpret_cast<char *>(data.begin()._Ptr), data.size());
 }
 
 bool Public::DataFrame::isCorrect(void) const
@@ -82,50 +82,52 @@ unsigned int Public::countFrames(const DataRoulette & dataqRoulette)
 	return counter;
 }
 
-void Public::encode(std::string & data)
+void Public::encode(DataType & data)
 {
 	unsigned char k(0);
 	for (unsigned int i(0), j(data.size()); i != j; ++i, ++k)
 		data[i] += k;
 }
 
-void Public::decode(std::string & data)
+void Public::decode(DataType & data)
 {
 	unsigned char k(0);
 	for (unsigned char i(0), j(data.size()); i != j; ++i, ++k)
 		data[i] = (unsigned char)(data[i] - k);
 }
 
-std::string Public::ui2str(unsigned int num)
+Public::DataType Public::ui2data(unsigned int num)
 {
-	std::string str;
+	DataType data;
 	if (num == 0)
 	{
-		str = std::string("\0");
+		data.push_back(0);
 	}
 	else 
 	{
 		for (unsigned int i(0); num != 0; ++i, num >>= 8)
-			str.insert(str.begin(), (unsigned char)(num & 0x000000ff));
+			data.insert(data.begin(), (unsigned char)(num & 0x000000ff));
 	}
-	return std::move(str);
+	return std::move(data);
 }
 
-unsigned int Public::str2ui(const std::string & str)
+unsigned int Public::data2ui(const DataType & data)
 {
 	unsigned int num(0);
-	for (unsigned int i(0), j(str.size()); i != j; ++i)
+	for (unsigned int i(0), j(data.size()); i != j; ++i)
 	{
 		num <<= 8;
-		num += (unsigned char)str[i];
+		num += (unsigned char)data[i];
 	}
 	return num;
 }
 
-std::string Public::str2uiHex(const std::string & str)
+std::string Public::data2uiHex(const DataType & data)
 {
 	std::ostringstream sout;
-	for (const unsigned char b : str)
-		sout << std::hex << (unsigned int)b;
+	for (unsigned int i(0), j(data.size()); i != j; ++i)
+	{
+		sout << std::hex << (unsigned int)data[i];
+	}		
 	return std::move(sout.str());
 }

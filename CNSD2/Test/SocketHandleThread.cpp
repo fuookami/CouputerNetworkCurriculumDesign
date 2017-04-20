@@ -115,13 +115,13 @@ void SocketHandleThread::dataReceived()
 	}
 
 	sout.clear();
-	sout << "帧校验正确，数据为：" << Public::str2uiHex(currFrame.data) << std::endl;
+	sout << "帧校验正确，数据为：" << Public::data2uiHex(currFrame.data) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 	emit pushMsg(QString::fromLocal8Bit("准备进行解密\n"), id);
 	Public::decode(currFrame.data);
 	emit pushMsg(QString::fromLocal8Bit("解密完成\n"), id);
 	sout.clear();
-	sout << "解密后数据为：" << Public::str2uiHex(currFrame.data) << std::endl;
+	sout << "解密后数据为：" << Public::data2uiHex(currFrame.data) << std::endl;
 	emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 
 	switch (threadState)
@@ -211,7 +211,7 @@ void SocketHandleThread::sendFrames(void)
 
 void SocketHandleThread::sendFrame(Public::RequestType requestType, unsigned int arg)
 {
-	std::string data(Public::ui2str(arg));
+	Public::DataType data(Public::ui2data(arg));
 	Public::encode(data);
 	sendFrame(Public::DataFrame(0, requestType, data.begin(), data.end()));
 }
@@ -242,7 +242,7 @@ void SocketHandleThread::dataReceivedForIdle(const Public::DataFrame &currFrame,
 		recievingInfo.buffFrameId.clear();
 		for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
 			currDeque.clear();
-		recievingInfo.totalFrameNum = Public::str2ui(currFrame.data);
+		recievingInfo.totalFrameNum = Public::data2ui(currFrame.data);
 
 		std::ostringstream sout;
 		sout << "接收到数据发送请求，共" << recievingInfo.totalFrameNum << "个包，转入接收数据包状态" << std::endl;
@@ -362,7 +362,7 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 {
 	if (currFrame.request == Public::RequestTypes::ACK)
 	{
-		unsigned int data(Public::str2ui(currFrame.data));
+		unsigned int data(Public::data2ui(currFrame.data));
 		if (data == (unsigned char)-1)
 		{
 			// 初始化发送槽，并转入发送状态
@@ -400,7 +400,7 @@ void SocketHandleThread::dataReceivedForWaitSending(const Public::DataFrame &cur
 			recievingInfo.buffFrameId.clear();
 			for (std::deque<Public::DataFrame> &currDeque : recievingInfo.recievingData)
 				currDeque.clear();
-			recievingInfo.totalFrameNum = Public::str2ui(currFrame.data);
+			recievingInfo.totalFrameNum = Public::data2ui(currFrame.data);
 
 			std::ostringstream sout;
 			sout << "接收到数据发送请求，共" << recievingInfo.totalFrameNum << "个包，转入接收数据包状态" << std::endl;
@@ -426,7 +426,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 {
 	if (currFrame.request == Public::RequestTypes::ACK)
 	{
-		unsigned int data(Public::str2ui(currFrame.data));
+		unsigned int data(Public::data2ui(currFrame.data));
 		if (data == -1)
 		{
 			// 如果收到ACK(-1)，则将当前数据轮盘出队并停止所有的数据轮盘计时器，然后转移到空闲状态

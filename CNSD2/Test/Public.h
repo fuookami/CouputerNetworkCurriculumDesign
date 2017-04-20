@@ -60,10 +60,11 @@ namespace Public
 	State getRandomFrameState(void);
 	std::string getFrameStateString(State state);
 
+	using DataType = std::vector<unsigned char>;
 	struct DataFrame
 	{
 		DataFrame(QDataStream &in);
-		DataFrame(unsigned int id, RequestType _request, std::string::iterator bgIt, std::string::iterator edIt);
+		DataFrame(unsigned int id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt);
 		~DataFrame() {}
 
 		void getQByteArray(QByteArray &block) const;
@@ -73,7 +74,7 @@ namespace Public
 		RequestType request;
 		unsigned char checkNum;
 		unsigned char frameSize;
-		std::string data;
+		std::vector<unsigned char> data;
 	};
 
 	using DataRoulette = std::array<std::deque<DataFrame>, 10>;
@@ -84,37 +85,37 @@ namespace Public
 	std::pair<RequestType, T> readDataRoulette(DataRoulette &dataRoulette);
 	using DataDeque = std::deque<DataRoulette>;
 
-	void encode(std::string &data);
-	void decode(std::string &data);
+	void encode(DataType &data);
+	void decode(DataType &data);
 
-	std::string ui2str(const unsigned int num);
-	unsigned int str2ui(const std::string &str);
-	std::string str2uiHex(const std::string &str);
+	DataType ui2data(const unsigned int num);
+	unsigned int data2ui(const DataType &data);
+	std::string data2uiHex(const DataType &data);
 };
 
 template <class T>
 Public::DataRoulette Public::makeDataRoulette(T data)
 {
 	static auto HasPutAllData([]
-	(const unsigned int i, const unsigned j, const std::string &dataStr)->bool
+	(const unsigned int i, const unsigned j, const std::vector<unsigned char> &dataVec)->bool
 	{
-		return (i * RouletteSize + j) * FrameMaxSize >= dataStr.size();
+		return (i * RouletteSize + j) * FrameMaxSize >= dataVec.size();
 	});
 
 	DataRoulette dataRoulette;
 
 	std::ostringstream sout;
 	sout << data;
-	std::string &dataStr(sout.str());
-	encode(dataStr);
-	std::string::iterator currIt(dataStr.begin());
-	for (unsigned int i(0); !HasPutAllData(i, 0, dataStr); ++i)
+	DataType dataVec(sout.str().begin(), sout.str().end());
+	encode(dataVec);
+	std::vector<unsigned char>::iterator currIt(dataVec.begin());
+	for (unsigned int i(0); !HasPutAllData(i, 0, dataVec); ++i)
 	{
 		for (unsigned int j(0); j != RouletteSize; ++j)
 		{
-			if (HasPutAllData(i, j + 1, dataStr))
+			if (HasPutAllData(i, j + 1, dataVec))
 			{
-				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, dataStr.end()));
+				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, dataVec.end()));
 				break;
 			}
 			else
