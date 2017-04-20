@@ -16,6 +16,7 @@ Public::DataFrame::DataFrame(QDataStream & in)
 Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt)
 	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
+	encode(data);
 	frameSize = data.size();
 	for (unsigned short i(0), j(data.size()); i != j; ++i)
 		checkNum += (unsigned char)data[i];
@@ -54,10 +55,10 @@ Public::State Public::getRandomFrameState()
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
 	static std::poisson_distribution<> d(FrameStateNum);
-	
+
 	if (randomNumberMap.empty())
 		generateRandomNumberMap();
-	
+
 	unsigned int currNum(d(gen) - 1);
 
 	return currNum >= randomNumberMap.size() ? (FrameStateNum - 1) : randomNumberMap[currNum];
@@ -95,7 +96,6 @@ Public::DataRoulette Public::makeDataRoulette(DataType data)
 
 	DataRoulette dataRoulette;
 
-	encode(data);
 	DataType::iterator currIt(data.begin());
 	for (unsigned int i(0); !HasPutAllData(i, 0, data); ++i)
 	{
@@ -103,12 +103,12 @@ Public::DataRoulette Public::makeDataRoulette(DataType data)
 		{
 			if (HasPutAllData(i, j + 1, data))
 			{
-				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
+				dataRoulette[j].emplace_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
 				break;
 			}
 			else
 			{
-				dataRoulette[j].push_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
+				dataRoulette[j].emplace_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
 				currIt += FrameMaxSize;
 			}
 		}
@@ -161,7 +161,7 @@ Public::DataType Public::ui2data(unsigned int num)
 	{
 		data.push_back(0);
 	}
-	else 
+	else
 	{
 		for (unsigned int i(0); num != 0; ++i, num >>= 8)
 			data.insert(data.begin(), (unsigned char)(num & 0x000000ff));
@@ -186,6 +186,6 @@ std::string Public::data2uiHex(const DataType & data)
 	for (unsigned int i(0), j(data.size()); i != j; ++i)
 	{
 		sout << std::hex << (unsigned int)data[i];
-	}		
+	}
 	return std::move(sout.str());
 }

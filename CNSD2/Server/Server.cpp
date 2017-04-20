@@ -36,7 +36,7 @@ Public::RetCode Server::close()
 			connect(th.second.get(), SIGNAL(stopped(unsigned int)), this, SLOT(socketHandleThreadStopped(unsigned int)));
 		}
 	}
-	
+
 	return Public::RetCodes::NoError;
 }
 
