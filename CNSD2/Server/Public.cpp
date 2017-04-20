@@ -108,7 +108,7 @@ Public::DataRoulette Public::makeDataRoulette(DataType data)
 			}
 			else
 			{
-				dataRoulette[j].emplace_back(DataFrame(j, Public::RequestTypes::PKT, currIt, data.end()));
+				dataRoulette[j].emplace_back(DataFrame(j, Public::RequestTypes::PKT, currIt, currIt + FrameMaxSize));
 				currIt += FrameMaxSize;
 			}
 		}
