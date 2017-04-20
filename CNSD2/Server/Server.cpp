@@ -23,6 +23,7 @@ Public::RetCode Server::close()
 	if (tcpSocketThreads.empty())
 	{
 		emit pushMsg(QString::fromLocal8Bit("当前没有客户端与服务器连接，将直接关闭服务器。\n"));
+		disconnect(tcpServer, SIGNAL(newConnection()));
 		emit closed();
 	}
 	else {
@@ -90,6 +91,13 @@ void Server::socketHandleThreadStopped(unsigned int id)
 {
 	tcpSocketThreads[id].reset();
 	tcpSocketThreads.erase(id);
+
+	if (tcpSocketThreads.empty())
+	{
+		emit pushMsg(QString::fromLocal8Bit("已关闭所有客户端的连接，将关闭服务器\n"));
+		disconnect(tcpServer, SIGNAL(newConnection()));
+		emit closed();
+	}
 }
 
 std::string Server::dispose(const Public::DataType data)
