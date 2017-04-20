@@ -68,12 +68,12 @@ public:
     {
         if (CilentWidget->objectName().isEmpty())
             CilentWidget->setObjectName(QStringLiteral("CilentWidget"));
-        CilentWidget->resize(480, 350);
-        CilentWidget->setMinimumSize(QSize(480, 350));
-        CilentWidget->setMaximumSize(QSize(480, 350));
+        CilentWidget->resize(480, 720);
+        CilentWidget->setMinimumSize(QSize(480, 720));
+        CilentWidget->setMaximumSize(QSize(480, 720));
         verticalLayoutWidget = new QWidget(CilentWidget);
         verticalLayoutWidget->setObjectName(QStringLiteral("verticalLayoutWidget"));
-        verticalLayoutWidget->setGeometry(QRect(10, 10, 461, 331));
+        verticalLayoutWidget->setGeometry(QRect(10, 10, 461, 701));
         verticalLayout = new QVBoxLayout(verticalLayoutWidget);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -258,7 +258,7 @@ public:
 
     void retranslateUi(QWidget *CilentWidget)
     {
-        CilentWidget->setWindowTitle(QApplication::translate("CilentWidget", "Cilent", Q_NULLPTR));
+        CilentWidget->setWindowTitle(QApplication::translate("CilentWidget", "CilentWidget", Q_NULLPTR));
         label->setText(QApplication::translate("CilentWidget", "IP\345\234\260\345\235\200\357\274\232", Q_NULLPTR));
         LocalHostRadios->setText(QApplication::translate("CilentWidget", "\346\234\254\345\234\260", Q_NULLPTR));
         IPAddressRadio->setText(QApplication::translate("CilentWidget", "\346\214\207\345\256\232IP\345\234\260\345\235\200", Q_NULLPTR));

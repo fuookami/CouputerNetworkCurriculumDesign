@@ -57,12 +57,12 @@ public:
     {
         if (ServerWidget->objectName().isEmpty())
             ServerWidget->setObjectName(QStringLiteral("ServerWidget"));
-        ServerWidget->resize(450, 350);
-        ServerWidget->setMinimumSize(QSize(450, 350));
-        ServerWidget->setMaximumSize(QSize(450, 350));
+        ServerWidget->resize(450, 720);
+        ServerWidget->setMinimumSize(QSize(450, 720));
+        ServerWidget->setMaximumSize(QSize(450, 720));
         verticalLayoutWidget = new QWidget(ServerWidget);
         verticalLayoutWidget->setObjectName(QStringLiteral("verticalLayoutWidget"));
-        verticalLayoutWidget->setGeometry(QRect(10, 10, 426, 331));
+        verticalLayoutWidget->setGeometry(QRect(10, 10, 426, 701));
         verticalLayout = new QVBoxLayout(verticalLayoutWidget);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);

@@ -59,7 +59,7 @@ void ServerWindow::serverClosed(void)
 void ServerWindow::showMsg(const QString msg)
 {
 	ui->Log->insertPlainText(msg);
-	qDebug() << QString::fromLocal8Bit("·þÎñÆ÷£º") << msg;
+	ui->Log->moveCursor(QTextCursor::End);
 }
 
 bool ServerWindow::checkIsValid(void)

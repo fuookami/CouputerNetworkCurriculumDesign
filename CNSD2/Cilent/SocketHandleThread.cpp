@@ -26,6 +26,7 @@ void PKTTimer::timeoutSlot(void)
 SocketHandleThread::SocketHandleThread(QTcpSocket * _tcpSocket, unsigned int _id, bool _isServer)
 	: tcpSocket(_tcpSocket), id(_id), isServer(_isServer), threadState(Public::ThreadState::Close)
 {
+	++threadCounter;
 	for (unsigned int i(0), j(sendingInfo.timers.size()); i != j; ++i)
 	{
 		sendingInfo.timers[i] = new PKTTimer(i);
@@ -143,14 +144,14 @@ void SocketHandleThread::dataReceived()
 	}
 }
 
-void SocketHandleThread::PKTTimeOut(unsigned char id)
+void SocketHandleThread::PKTTimeOut(unsigned char PKTID)
 {
-	if (calIdDistance(id, sendingInfo.lastAcceptId) == 1)
+	if (calIdDistance(PKTID, sendingInfo.lastAcceptId) == 1)
 	{
 		std::ostringstream sout;
-		sout << "编号为" << (unsigned int)id << "的数据帧等待回复超时，将重新发送" << std::endl;
+		sout << "编号为" << (unsigned int)PKTID << "的数据帧等待回复超时，将重新发送" << std::endl;
 		emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
-		sendFrame(sendingInfo.sendingData.front()[id].front());
+		sendFrame(sendingInfo.sendingData.front()[PKTID].front());
 	}
 }
 
@@ -298,8 +299,10 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 			if (frameState == Public::FrameState::FrameNoError)
 			{
 				unsigned int signalId = recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1;
+				sout.str("");
 				sout << "将向对方发送ACK(" << signalId << ")信号" << std::endl;
 				sendFrame(Public::RequestTypes::ACK, signalId);
+				emit pushMsg(QString::fromLocal8Bit(sout.str().c_str()), id);
 			}
 		}
 		else
@@ -316,11 +319,14 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				sout.str("");
 				while (!recievingInfo.buffFrameId.empty() && recievingInfo.buffFrameId.find(recievingInfo.waitingFrameId) != recievingInfo.buffFrameId.cend())
 				{
-					sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中" << std::endl;
+					sout << "编号为" << recievingInfo.waitingFrameId << "的帧已在帧轮盘中，";
 					++recievingInfo.currFrameNum;
 					recievingInfo.buffFrameId.erase(recievingInfo.waitingFrameId);
 					recievingInfo.waitingFrameId = ++recievingInfo.waitingFrameId % Public::RouletteSize;
 				}
+				if (!sout.str().empty())
+					sout << std::endl;
+				
 
 				if (frameState == Public::FrameState::FrameNoError)
 				{
@@ -337,7 +343,7 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				recievingInfo.buffFrameId.insert(currFrameId);
 				sout.str("");
 				sout << "希望收到的帧编号为" << recievingInfo.waitingFrameId << "，将该帧装入帧轮盘中" << std::endl;
-				if (frameState == Public::FrameState::FrameNoError)
+				if (frameState == Public::FrameState::FrameNoError && recievingInfo.currFrameNum != 0)
 				{
 					unsigned int signalId(recievingInfo.waitingFrameId == 0 ? Public::RouletteSize - 1 : recievingInfo.waitingFrameId - 1);
 					sout << "将向对方发送ACK(" << signalId << ")信号" << std::endl;
@@ -469,9 +475,13 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 
 			timePartTimer->start(Public::MSOfTimePart);
 		}
+		else if (data == Public::RetCodes::OK)
+		{
+			emit pushMsg(QString::fromLocal8Bit("已收到发送数据许可，将丢弃该数据包\n"), id);
+		}
 		else
 		{
-			if (calIdDistance(data, sendingInfo.lastAcceptId) >= Public::WindowSize)
+			if (calIdDistance(data, sendingInfo.lastAcceptId) > Public::WindowSize)
 			{
 				// 帧已被确认接收
 				emit pushMsg(QString::fromLocal8Bit("帧已被确认收到，将丢弃该数据包\n"), id);
@@ -494,7 +504,7 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 				if (Public::countFrames(sendingInfo.sendingData.front()) == 0)
 				{
 					threadState = Public::ThreadState::Idle;
-					emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。"), id);
+					emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。\n"), id);
 
 					sendingInfo.sendingData.pop_front();
 					timePartTimer->start(Public::MSOfTimePart);

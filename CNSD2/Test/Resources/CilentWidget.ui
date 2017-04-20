@@ -7,23 +7,23 @@
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>350</height>
+    <height>720</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>480</width>
-    <height>350</height>
+    <height>720</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>480</width>
-    <height>350</height>
+    <height>720</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>Cilent</string>
+   <string>CilentWidget</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
@@ -31,7 +31,7 @@
      <x>10</x>
      <y>10</y>
      <width>461</width>
-     <height>331</height>
+     <height>701</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
