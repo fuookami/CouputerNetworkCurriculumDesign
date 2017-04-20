@@ -63,6 +63,7 @@ void Cilent::connectSucceed()
 	emit pushMsg(QString::fromLocal8Bit("连接成功，可以准备收发数据\n"));
 	disconnect(tcpSocket, SIGNAL(connected()));
 
+	thisMSOfOnceTry = 0;
 	emit pushMsg(QString::fromLocal8Bit("已开启Socket管程\n"));
 	handleThread->start();
 }
