@@ -362,7 +362,6 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				emit pushMsg(QString::fromLocal8Bit("已收到所有数据包，向服务器推送数据，转入空闲状态\n"), id);
 				emit pushData(std::move(data), id);
 				threadState = Public::ThreadState::Idle;
-				timePartTimer->start(Public::MSOfTimePart);
 
 				if (frameState == Public::FrameState::NoReply)
 					return;
