@@ -13,7 +13,7 @@ Public::DataFrame::DataFrame(QDataStream & in)
 	delete rawData;
 }
 
-Public::DataFrame::DataFrame(unsigned int _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt)
+Public::DataFrame::DataFrame(unsigned char _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt)
 	: id(_id), request(_request), checkNum(0), data(bgIt, edIt)
 {
 	encode(data);

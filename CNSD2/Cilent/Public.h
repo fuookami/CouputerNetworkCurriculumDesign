@@ -74,13 +74,13 @@ namespace Public
 	struct DataFrame
 	{
 		DataFrame(QDataStream &in);
-		DataFrame(unsigned int id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt);
+		DataFrame(unsigned char _id, RequestType _request, std::vector<unsigned char>::iterator bgIt, std::vector<unsigned char>::iterator edIt);
 		~DataFrame() {}
 
 		void getQByteArray(QByteArray &block) const;
 		bool isCorrect(void) const;
 
-		unsigned int id;
+		unsigned char id;
 		RequestType request;
 		unsigned char checkNum;
 		unsigned char frameSize;
