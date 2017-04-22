@@ -175,7 +175,7 @@ void SocketHandleThread::mainLoop(void)
 			timePartTimer->start(Public::MSOfTimePart * Public::timeOfRetryTimePart);
 			sendFrame(Public::RequestTypes::SYN, Public::countFrames(sendingInfo.sendingData.front()));
 		}
-		else 
+		else
 		{
 			timePartTimer->start(Public::MSOfTimePart);
 		}
@@ -326,7 +326,7 @@ void SocketHandleThread::dataReceivedForReceiving(Public::DataFrame currFrame, P
 				}
 				if (!sout.str().empty())
 					sout << std::endl;
-				
+
 
 				if (frameState == Public::FrameState::FrameNoError)
 				{
@@ -510,13 +510,12 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 					emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。\n"), id);
 
 					sendingInfo.sendingData.pop_front();
-					timePartTimer->start(Public::MSOfTimePart);
 					for (unsigned int i(0); i != Public::RouletteSize; ++i)
 						sendingInfo.timers[i]->stopTimer();
 
 					timePartTimer->start(Public::MSOfTimePart);
 				}
-				else 
+				else
 				{
 					sendFrames();
 				}

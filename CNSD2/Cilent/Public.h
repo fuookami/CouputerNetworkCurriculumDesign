@@ -87,7 +87,7 @@ namespace Public
 		std::vector<unsigned char> data;
 	};
 
-	using DataRoulette = std::array<std::deque<DataFrame>, 10>;
+	using DataRoulette = std::array<std::deque<DataFrame>, RouletteSize>;
 	DataRoulette makeDataRoulette(DataType data);
 	unsigned int countFrames(const DataRoulette &dataqRoulette);
 	DataType readDataRoulette(DataRoulette &dataRoulette);
