@@ -509,7 +509,6 @@ void SocketHandleThread::dataReceivedForSending(const Public::DataFrame &currFra
 					emit pushMsg(QString::fromLocal8Bit("所有帧已被确认收到，转入空闲状态。\n"), id);
 
 					sendingInfo.sendingData.pop_front();
-					timePartTimer->start(Public::MSOfTimePart);
 					for (unsigned int i(0); i != Public::RouletteSize; ++i)
 						sendingInfo.timers[i]->stopTimer();
 
