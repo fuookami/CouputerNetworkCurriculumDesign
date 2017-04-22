@@ -59,9 +59,9 @@ Public::State Public::getRandomFrameState()
 	if (randomNumberMap.empty())
 		generateRandomNumberMap();
 
-	unsigned int currNum(d(gen) - 1);
+	unsigned int currNum((d(gen) - 1 + randomNumberMap.size()) % randomNumberMap.size());
 
-	return currNum >= randomNumberMap.size() ? (FrameStateNum - 1) : randomNumberMap[currNum];
+	return randomNumberMap[currNum];
 }
 
 std::string Public::getFrameStateString(State state)
